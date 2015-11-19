@@ -133,8 +133,23 @@ class Client extends EventEmitter
                 s: ActionResponse.ERROR
             throw err
     
-    /** @TODO */
+    /**
+     * Calls the action response handler.
+     * @param {object} data Data
+     */
     _call-action-response-handler: (data) ->
+        return if not @action-callbacks[data.i]
+        set-timeout ~>
+            var err
+            if data.s is not ActionResponse.OK
+                switch data.s
+                case ActionResponse.ERROR
+                    err := new Error "a server error occured"
+                case ActionResponse.NONEXISTENT
+                    err := new Error "action does not exist"
+                default
+                    err := new Error "a non-OK response was received: #{data.s}"
+            @action-callbacks[data.i] err, data.d
 
     /**
      * Emits an event with event data.
