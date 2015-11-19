@@ -37,6 +37,18 @@ class RoomManager
         @rooms[name].add client
 
     /**
+     * Removes client from room.
+     * @param {String} name Room name
+     * @param {Client} client Socketeer client
+     * @returns {Boolean} removed Whether the client was removed from room.
+     *                            False if room doesn't exist, or
+     *                            if client wasn't in the room.
+     */
+    leave: (name, client) ->
+        return false if not @rooms[name]
+        return @rooms[name].remove client
+
+    /**
      * Removes a room.
      * @param {String} name Room name
      */
