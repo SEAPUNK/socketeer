@@ -85,7 +85,7 @@ class SocketeerServer extends EventEmitter
 
     /**
      * Broadcasts a message to all connected clients
-     * Alias to room['all'].broadcast
+     * Alias to this.room.rooms['all'].emit
      * @param {String} name Event name
      * @param {Object} data Event data
      */

@@ -33,8 +33,27 @@ class RoomManager
      * @param {Client} client Socketeer client
      */
     join: (name, client) ->
+        if name is 'all'
+            throw new Error "cannot add client to room 'all': reserved room"
         @create name
         @rooms[name].add client
+
+    /**
+     * @private
+     * Adds client to "all" room.
+     * @param {Client} client Socketeer client
+     */
+    _joinAll: (client) ->
+        @rooms['all'].add client
+
+    /**
+     * @private
+     * Removes client from the "all" room.
+     * @param {Client} client Socketeer client
+     * @type {[type]}
+     */
+    _leaveAll: (client) ->
+        @rooms['all'].remove client
 
     /**
      * Removes client from room.
@@ -45,6 +64,8 @@ class RoomManager
      *                            if client wasn't in the room.
      */
     leave: (name, client) ->
+        if name is 'all'
+            throw new Error "client cannot leave room 'all' until it's disconnected"
         return false if not @rooms[name]
         return @rooms[name].remove client
 
@@ -70,5 +91,14 @@ class RoomManager
             delete @rooms[name]
         @get 'all'
             .clear!
+
+    /**
+     * Removes client from all rooms.
+     * @param {Client} client Socketeer client
+     */
+    removeAll: (client) ->
+        for room, name in @rooms
+            continue if name is 'all'
+            room.remove client
 
 module.exports = RoomManager
