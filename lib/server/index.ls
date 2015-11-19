@@ -7,7 +7,6 @@ require! './client-pool':ClientPool
 require! './client':Client
 
 require! './room-manager':RoomManager
-require! './room':Room
 
 EventEmitter = events.EventEmitter
 
@@ -36,7 +35,7 @@ class SocketeerServer extends EventEmitter
      *                            Refer to the `ws.Server`
      *                            documentation for more details.
      */
-    start: (port, callback)
+    start: (port, callback) ->
         if @ws
             throw new Error "server has already started"
         @d "starting server on port #{port}"
@@ -55,6 +54,7 @@ class SocketeerServer extends EventEmitter
         @ws.on 'error', @handle-error
 
     /**
+     * @private
      * ws 'error' handler
      * @param {Object} err Error
      */
@@ -63,6 +63,7 @@ class SocketeerServer extends EventEmitter
         @emit 'error', err
 
     /**
+     * @private
      * ws 'headers' handler
      * @param {Object} headers Headers
      */
@@ -71,6 +72,7 @@ class SocketeerServer extends EventEmitter
         @emit 'headers', headers
 
     /**
+     * @private
      * ws 'connection' handler
      * @param {Object} connection Connection
      */
@@ -78,8 +80,18 @@ class SocketeerServer extends EventEmitter
         @d "got 'connection', creating client"
         id = @pool.add new Client connection
         client = @pool.get id
-        @room.add 'all', client
+        @room.join 'all', client
         @emit 'connection', client
+
+    /**
+     * Broadcasts a message to all connected clients
+     * Alias to room['all'].broadcast
+     * @param {String} name Event name
+     * @param {Object} data Event data
+     */
+    broadcast: (name, data) ->
+        @room.get 'all'
+            .emit name, data
 
     /**
      * Stops the server, closing all connections, and clearing the pool.
