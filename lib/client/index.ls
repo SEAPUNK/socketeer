@@ -1,5 +1,7 @@
 require! 'ws':WebSocket
 require! '../client-abstract':ClientAbstract
+require! 'debug'
+require! 'util'
 
 class SocketeerClient extends ClientAbstract
     /**
@@ -10,13 +12,16 @@ class SocketeerClient extends ClientAbstract
      *                         'heartbeatTimeout' parameter.
      */
     (address, protocols, options) ->
+        @d = debug 'socketeer:SocketeerClient'
         @construct-opts = do
             address: address
             protocols: protocols
             options: options
+        @d "constructing websocket with options: #{util.inspect @construct-opts}"
         @ws = new WebSocket ...
         @attach-events!
         @heartbeat-timeout = options.heartbeat-timeout or 15000
+        @d "heartbeat timeout set to #{@heartbeat-timeout}"
         super ws
 
     /**
@@ -24,6 +29,7 @@ class SocketeerClient extends ClientAbstract
      * Attaches ws events.
      */
     attach-events: ->
+        @d "attaching events"
         @ws.on 'open', @~handle-open
         super ...
 
@@ -32,6 +38,7 @@ class SocketeerClient extends ClientAbstract
      * Handles a heartbeat event.
      */
     handle-heartbeat: ->
+        @d "handling heartbeat"
         @reset-heartbeat-timeout!
         @ws.send 'h'
 
@@ -42,9 +49,13 @@ class SocketeerClient extends ClientAbstract
      * @param {Object} flags Flags
      */
     handle-message: (data, flags) ->
+        @d "handling message"
         if data is 'h' # BRING OUT YOUR H
+            @d "message is heartbeat"
             return @handle-heartbeat!
         if (String(data).index-of 'hi') is 0
+            @d "message is heartbeat interval"
+            @d "data: #{data}"
             reg = /^hi(.*)$/.exec String(data)
             interval = +reg[1]
             if Number.isNaN interval or not interval
@@ -54,31 +65,37 @@ class SocketeerClient extends ClientAbstract
                 @emit 'error', new Error 'invalid heartbeat interval from server'
                 return @terminate!
             @heartbeat-interval = interval
+            @d "heartbeat interval set to #{@heartbeat-interval}"
             return @reset-heartbeat-timeout!
         super ...
 
 
     /**
      * @private
-     * (Re)starts the heartbeat timeout.
+     * (Re)starts the heartbeat 1timeout.
      */
     reset-heartbeat-timeout: ->
+        timeoutPeriod = @heartbeat-interval + @heartbeat-timeout
+        @d "resetting heartbeat timeout: #{timeoutPeriod}"
         if @heartbeat-timer
+            @d "clearing existing heartbeat timer"
             clear-timeout @heartbeat-timer
         @heartbeat-timer = set-timeout ~>
+            @d "heartbeat timeout called"
             # This means that the server took too long to send a timeout.
             @emit 'timeout'
             # Terminate the connection because it timed out: there's no
             # point to handshaking a close, since that is also likely to
             # time out.
             @terminate!
-        , @heartbeat-interval + @heartbeat-timeout
+        , timeoutPeriod
 
     /**
      * @private
      * Stops heartbeat timeout.
      */
     stop-heartbeat-timeout: ->
+        @d "stopping heartbeat timeout"
         clear-timeout @heartbeat-timer
 
     /**
@@ -86,6 +103,7 @@ class SocketeerClient extends ClientAbstract
      * Handles open event.
      */
     handle-open: ->
+        @d "handling open"
         @ready = true
         /** @TODO timeout for before the 'hi' message */
         @emit 'open', @is-reconnection
@@ -97,6 +115,7 @@ class SocketeerClient extends ClientAbstract
      * @param {Object} message Message
      */
     handle-close: (code, message) ->
+        @d "handling close: #{code}, #{message}"
         @ready = false
         @closed = true
         @stop-heartbeat-timeout!
@@ -112,6 +131,7 @@ class SocketeerClient extends ClientAbstract
      *                              rather than an 'event'.
      */
     emit: (name, data, callback) ->
+        @d "emitting: #{name} - callback: #{callback}"
         if not @ready
             throw new Error "client is not ready"
         super ...
@@ -120,8 +140,11 @@ class SocketeerClient extends ClientAbstract
      * Reconnects to server.
      */
     reconnect: ->
+        @d "trying reconnect"
         if not @closed
+            @d "not closed, not going to reconnect"
             throw new Error "client has not disconnected to reconnect yet"
+        @d "reconnecting"
         @closed = false
         @is-reconnection = true
         o = @construct-opts

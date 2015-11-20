@@ -1,4 +1,6 @@
 require! 'events'
+require! 'debug'
+require! 'util'
 
 {ActionResponse} = require './enums'
 
@@ -16,6 +18,7 @@ class ClientAbstract extends EventEmitter
      * Attaches ws events.
      */
     attach-events: ->
+        @d "attaching events (super)"
         @ws.on 'message', @~handle-message
         @ws.on 'error', @~handle-error
         @ws.on 'close', @~handle-close
@@ -26,7 +29,9 @@ class ClientAbstract extends EventEmitter
      * @param {Object} data Data
      */
     send: (data) ->
-        @ws.send JSON.stringify data
+        data = JSON.stringify data
+        @d "sending data: #{data}"
+        @ws.send data
 
     /**
      * @private
@@ -34,6 +39,7 @@ class ClientAbstract extends EventEmitter
      * @param {Object} err Error
      */
     handle-error: (err) ->
+        @d "handling error: #{util.inspect err}"
         @emit 'error', err
 
     /**
@@ -43,6 +49,7 @@ class ClientAbstract extends EventEmitter
      * @param {Object} message Message
      */
     handle-close: (code, message) ->
+        @d "handling close (super): #{util.inspect code}, message: #{util.inspect message}"
         # Emit the close event
         @emit 'close', code, message
 
@@ -53,16 +60,22 @@ class ClientAbstract extends EventEmitter
      * @param {Object} flags Flags
      */
     handle-message: (data, flags) ->
+        @d "handling message"
         if typeof data is not 'string'
+            @d "message is not string, ignoring"
             /** @TODO handle data other than JSON */
             return
         try
+            @d "parsing JSON: #{data}"
             data = JSON.parse data
         catch err
+            @d "JSON parse failed, ignoring: #{util.inspect err}"
             return
         if data.a
+            @d "data is action"
             return @handle-action data
         if data.e
+            @d "data is event"
             return @handle-event data
 
     /**
@@ -71,6 +84,7 @@ class ClientAbstract extends EventEmitter
      * @param {Object} data Data
      */
     handle-action: (data) ->
+        @d "handling action: #{util.inspect data}"
         if data.s
             return @_call-action-response-handler data
 
@@ -82,6 +96,7 @@ class ClientAbstract extends EventEmitter
      * @param {Object} data Data
      */
     handle-event: (data) ->
+        @d "handling event: #{util.inspect data}"
         @_call-event-handlers data
 
     /**
@@ -90,7 +105,9 @@ class ClientAbstract extends EventEmitter
      * @param {object} data Data
      */
     _call-event-handlers: (data) ->
+        @d "event handlers for event '#{data.e}'"
         return if not @events[data.e]
+        @d "event '#{data.e}' exists, there are #{@events[data.e].length} handlers"
 
         run = (evt, data) ->
             set-timeout ->
@@ -105,19 +122,24 @@ class ClientAbstract extends EventEmitter
      * @param {object} data Data
      */
     _call-action-handler: (data) ->
+        @d "action handler for action '#{data.a}'"
         if not @actions[data.a]
+            @d "action '#{data.a}' does not exist"
             return @send do
                 i: data.i
                 a: data.a
                 s: ActionResponse.NONEXISTENT
         try
+            @d "calling action handler '#{data.a}'"
             @actions[data.a] data.d, (data) ~>
+                @d "action handler '#{data.a}' called back, responding"
                 @send do
                     i: data.i
                     a: data.a
                     s: ActionResponse.OK
                     d: data
         catch err
+            @d "failed calling action handler: #{util.inspect err}"
             @send do
                 i: data.i
                 a: data.a
@@ -130,8 +152,11 @@ class ClientAbstract extends EventEmitter
      * @param {Object} data Data
      */
     _call-action-response-handler: (data) ->
+        @d "action response handler for #{data.a}@#{data.i}"
         return if not @action-callbacks[data.i]
+        @d "response handler exists, continuing"
         set-timeout ~>
+            @d "determining error from status: #{data.s}"
             var err
             if data.s is not ActionResponse.OK
                 switch data.s
@@ -141,6 +166,7 @@ class ClientAbstract extends EventEmitter
                     err := new Error "action does not exist"
                 default
                     err := new Error "a non-OK response was received: #{data.s}"
+            @d "calling action response handler #{data.a}@#{data.i}"
             @action-callbacks[data.i] err, data.d
 
     /**
@@ -149,6 +175,7 @@ class ClientAbstract extends EventEmitter
      */
     _curActionId: 0
     _generateActionId = ->
+        @d "generating action id: #{_curActionId}"
         return @_curActionId++
 
     /**
@@ -159,6 +186,7 @@ class ClientAbstract extends EventEmitter
      * @param {Function} callback Action response callback
      */
     _emitAction: (name, data, callback) ->
+        @d "emitting action: #{name}"
         id = @_generateActionId!
         @action-callbacks[id] = callback
         @send do
@@ -173,6 +201,7 @@ class ClientAbstract extends EventEmitter
      * @param {Object} data Event data
      */
     _emitEvent: (name, data) ->
+        @d "emitting event: #{name}"
         @send do
             e: name
             d: data
@@ -183,6 +212,7 @@ class ClientAbstract extends EventEmitter
      * @param {Function} handler Event handler
      */
     event: (name, handler) ->
+        @d "defining event handler for '#{name}'"
         if not @events[name]
             @events[name] = []
         @events[name].push handler
@@ -195,7 +225,9 @@ class ClientAbstract extends EventEmitter
      *                        if it already exists for the action
      */
     action: (name, handler, force) ->
+        @d "defining action handler for '#{name}' (force: #{not not force})"
         if @actions[name] and not force
+            @d "action handler is already defined"
             throw new Error "action is already registered"
         @actions[name] = handler
 
@@ -208,6 +240,7 @@ class ClientAbstract extends EventEmitter
      *                              rather than an 'event'.
      */
     emit: (name, data, callback) ->
+        @d "emitting: #{name} - typeof callback: #{typeof callback}"
         if typeof callback is 'function'
             @_emitAction name, data, callback
         else
@@ -217,12 +250,14 @@ class ClientAbstract extends EventEmitter
      * Closes the connection gracefully.
      */
     close: ->
+        @d "closing connection"
         @ws.close!
 
     /**
      * Closes the connection, less gracefully.
      */
     kill: ->
+        @d "killing connection"
         @ws.terminate!
 
 module.exports = ClientAbstract

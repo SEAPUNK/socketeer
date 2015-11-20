@@ -1,5 +1,7 @@
 class Room
     (@name) ->
+        @d = debug "socketeer:Room[#{@name}]"
+        @d "constructing new instance"
 
     clients: []
 
@@ -10,6 +12,7 @@ class Room
      *                          False if client was already in room.
      */
     add: (client) ->
+        @d "adding client to room: #{client?.id}"
         for _client, idx in @clients
             if client is _client
                 return false
@@ -24,6 +27,7 @@ class Room
      *                            in the first place.
      */
     remove: (client) ->
+        @d "removing client from room: #{client?.id}"
         for _client, idx in @clients
             if client is _client
                 @clients.splice idx, 1
@@ -36,6 +40,7 @@ class Room
      * @returns {Boolean} exists Whether the client is in this room.
      */
     exists: (client) ->
+        @d "checking if client exists in room: #{client?.id}"
         for _client in @clients
             if client is _client
                 return true
@@ -47,6 +52,7 @@ class Room
      * @param {Object} data Event data
      */
     emit: (name, data) ->
+        @d "emitting #{name} to all clients in room"
         for client in @clients
             client.emit name, data
 
@@ -54,6 +60,7 @@ class Room
      * Removes all clients from the room.
      */
     clear: ->
+        @d "clearing room from clients"
         @clients = []
 
 module.exports = Room

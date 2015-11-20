@@ -1,7 +1,10 @@
 require! './room':Room
+require! 'debug'
 
 class RoomManager
     ->
+        @d = debug 'socketeer:RoomManager'
+        @d "constructing new instance"
         @rooms['all'] = new Room 'all'
 
     rooms: {}
@@ -13,9 +16,11 @@ class RoomManager
      *                            Value is 'false' if the room already exists.
      */
     create: (name) ->
+        @d "creating room with name #{name}"
         if name is 'all'
             throw new Error "cannot create room 'all': reserved room name"
         return false if @rooms[name]
+        @d "room doesn't exist, constructing"
         rooms[name] = new Room name
         return true
 
@@ -25,6 +30,7 @@ class RoomManager
      * @returns {Room} room Socketeer room
      */
     get: (name) ->
+        @d "getting room #{name}"
         return rooms[name]
 
     /**
@@ -33,6 +39,7 @@ class RoomManager
      * @param {Client} client Socketeer client
      */
     join: (name, client) ->
+        @d "joining client to room #{name}: #{client?.id}"
         if name is 'all'
             throw new Error "cannot add client to room 'all': reserved room"
         @create name
@@ -44,6 +51,7 @@ class RoomManager
      * @param {Client} client Socketeer client
      */
     _joinAll: (client) ->
+        @d "joining client to 'all' room: #{client?.id}"
         @rooms['all'].add client
 
     /**
@@ -53,6 +61,7 @@ class RoomManager
      * @type {[type]}
      */
     _leaveAll: (client) ->
+        @d "removing client from 'all' room: #{client?.id}"
         @rooms['all'].remove client
 
     /**
@@ -64,6 +73,7 @@ class RoomManager
      *                            if client wasn't in the room.
      */
     leave: (name, client) ->
+        @d "removing client from room #{name}: #{client?.id}"
         if name is 'all'
             throw new Error "client cannot leave room 'all' until it's disconnected"
         return false if not @rooms[name]
@@ -74,6 +84,7 @@ class RoomManager
      * @param {String} name Room name
      */
     remove: (name) ->
+        @d "removing room #{name}"
         if name is 'all'
             throw new Error "cannot remove room 'all': reserved room name"
         return false if not @rooms[name]
@@ -85,6 +96,7 @@ class RoomManager
      * and removes all clients from the 'all' room.
      */
     clear: ->
+        @d "clearing rooms"
         for room, name in @rooms
             continue if name is 'all'
             room.clear!
@@ -97,6 +109,7 @@ class RoomManager
      * @param {Client} client Socketeer client
      */
     removeAll: (client) ->
+        @d "removing all clients from rooms except all"
         for room, name in @rooms
             continue if name is 'all'
             room.remove client

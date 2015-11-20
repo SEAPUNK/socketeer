@@ -15,7 +15,7 @@ class SocketeerServer extends EventEmitter
         @heartbeat-timeout = 15000
         @heartbeat-interval = 10000
     }) ->
-        @d = debug 'socketeer:server'
+        @d = debug 'socketeer:SocketeerServer'
         @d 'constructing new instance'
     
     /**
@@ -87,12 +87,13 @@ class SocketeerServer extends EventEmitter
         @emit 'connection', client
 
     /**
-     * Broadcasts a message to all connected clients
+     * Broadcasts an event to all connected clients
      * Alias to this.room.rooms['all'].emit
      * @param {String} name Event name
      * @param {Object} data Event data
      */
     broadcast: (name, data) ->
+        @d "broadcasting: #{name}, #{data}"
         @room.get 'all'
             .emit name, data
 

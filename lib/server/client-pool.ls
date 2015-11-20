@@ -1,4 +1,5 @@
 require! 'uuid'
+require! 'debug'
 
 class ClientPool
     /**
@@ -6,6 +7,8 @@ class ClientPool
      * @param {RoomManager} roomManager Socketeer room manager
      */
     (@manager) ->
+        @d = debug 'socketeer:ClientPool'
+        @d "constructing new client pool"
         @roomManager = @manager.room
 
     pool: {}
@@ -16,9 +19,11 @@ class ClientPool
      * @returns {String} id Client ID
      */
     add: (client) ->
+        @d "adding client to pool"
         while true
             id = uuid.v4!
             break if not @pool[id]
+        @d "generated client pool id: #{id}"
         client.register id, @, @room-manager
         @pool[id] = client
         return id
@@ -29,6 +34,7 @@ class ClientPool
      * @returns {Client} Socketeer client
      */
     get: (id) ->
+        @d "getting client with id #{id}"
         return @pool[id]
 
     /**
@@ -36,6 +42,7 @@ class ClientPool
      * @param {Function} func Function to use on each client
      */
     forEach: (func) ->
+        @d "running a foreach function on pool"
         for client of @pool
             func client
 
@@ -44,12 +51,14 @@ class ClientPool
      * @type {String} id Client ID
      */
     remove: (id) ->
+        @d "removing client with id #{id} from pool"
         delete @pool[id]
 
     /**
      * Clears the pool.
      */
     clear: ->
+        @d "clearing pool"
         @pool = {}
 
 module.exports = ClientPool
