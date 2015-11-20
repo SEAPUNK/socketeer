@@ -38,9 +38,7 @@ class ClientAbstract extends EventEmitter
      */
     handle-close: (code, message) ->
         # Emit the close event
-        @emit 'close', do
-            code: code
-            message: message
+        @emit 'close', code, message
 
     /**
      * @private

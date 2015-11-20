@@ -5,7 +5,8 @@ class ClientPool
      * Constructs the client pool.
      * @param {RoomManager} roomManager Socketeer room manager
      */
-    (@roomManager) ->
+    (@manager) ->
+        @roomManager = @manager.room
 
     pool: {}
     
