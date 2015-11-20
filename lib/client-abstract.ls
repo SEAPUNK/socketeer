@@ -8,6 +8,7 @@ EventEmitter = events.EventEmitter
 
 class ClientAbstract extends EventEmitter
     (ws) ->
+        @ip = ws._socket.remote-address
 
     events: {}
     actions: {}
