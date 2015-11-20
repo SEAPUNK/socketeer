@@ -1,7 +1,9 @@
 require! '../client-abstract':ClientAbstract
 
 class ServerClient extends ClientAbstract
-    (ws) -> super ...
+    (@ws) ->
+        @attach-events!
+        super ...
 
     /**
      * @private

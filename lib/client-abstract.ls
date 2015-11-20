@@ -5,14 +5,20 @@ require! 'events'
 EventEmitter = events.EventEmitter
 
 class ClientAbstract extends EventEmitter
-    (@ws) ->
-        @ws.on 'message', @~handle-message
-        @ws.on 'error', @~handle-error
-        @ws.on 'close', @~handle-close
+    (ws) ->
 
     events: {}
     actions: {}
     action-callbacks: {}
+
+    /**
+     * @private
+     * Attaches ws events.
+     */
+    attach-events: ->
+        @ws.on 'message', @~handle-message
+        @ws.on 'error', @~handle-error
+        @ws.on 'close', @~handle-close
 
     /**
      * @private

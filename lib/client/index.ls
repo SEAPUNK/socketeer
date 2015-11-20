@@ -7,13 +7,25 @@ class SocketeerClient extends ClientAbstract
      * @param {String} address Address passed to the ws module
      * @param {String|Array} protocols Protocols passed to the ws module
      * @param {Object} options Options passed to the ws module, with an additional
-     *                         'pingTimeout' parameter.
+     *                         'heartbeatTimeout' parameter.
      */
     (address, protocols, options) ->
-        ws = new WebSocket ...
-        @_pingTimeout = options.pingTimeout or 15000
-        ws.on 'open', @~handle-open
+        @construct-opts = do
+            address: address
+            protocols: protocols
+            options: options
+        @ws = new WebSocket ...
+        @attach-events!
+        @heartbeat-timeout = options.heartbeat-timeout or 15000
         super ws
+
+    /**
+     * @private
+     * Attaches ws events.
+     */
+    attach-events: ->
+        @ws.on 'open', @~handle-open
+        super ...
 
     /**
      * @private
@@ -50,10 +62,10 @@ class SocketeerClient extends ClientAbstract
      * @private
      * (Re)starts the heartbeat timeout.
      */
-    reset-heartbeat-timeout = ->
-        if @heartbeat-timeout
-            clear-timeout @heartbeat-timeout
-        @heartbeat-timeout = set-timeout ~>
+    reset-heartbeat-timeout: ->
+        if @heartbeat-timer
+            clear-timeout @heartbeat-timer
+        @heartbeat-timer = set-timeout ~>
             # This means that the server took too long to send a timeout.
             @emit 'timeout'
             # Terminate the connection because it timed out: there's no
@@ -64,12 +76,31 @@ class SocketeerClient extends ClientAbstract
 
     /**
      * @private
+     * Stops heartbeat timeout.
+     */
+    stop-heartbeat-timeout: ->
+        clear-timeout @heartbeat-timer
+
+    /**
+     * @private
      * Handles open event.
      */
     handle-open: ->
         @ready = true
         /** @TODO timeout for before the 'hi' message */
-        @emit 'open'
+        @emit 'open', @is-reconnection
+
+    /**
+     * @private
+     * Handles ws 'close' event.
+     * @param {Object} code Code
+     * @param {Object} message Message
+     */
+    handle-close: (code, message) ->
+        @ready = false
+        @closed = true
+        @stop-heartbeat-timeout!
+        super ...
 
     /**
      * Emits an event with event data.
@@ -84,5 +115,17 @@ class SocketeerClient extends ClientAbstract
         if not @ready
             throw new Error "client is not ready"
         super ...
+
+    /**
+     * Reconnects to server.
+     */
+    reconnect: ->
+        if not @closed
+            throw new Error "client has not disconnected to reconnect yet"
+        @closed = false
+        @is-reconnection = true
+        o = @construct-opts
+        ws = new WebSocket o.address, o.protocols, o.options
+        @attach-events!
 
 module.exports = SocketeerClient
