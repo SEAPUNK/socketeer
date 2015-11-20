@@ -18,6 +18,22 @@ class ServerClient extends ClientAbstract
         @start-heartbeat!
 
     /**
+     * Adds client to a room.
+     * Convenience function for RoomManager.join
+     * @param {String} name Room name
+     */
+    join: (name) ->
+        return @pool.roomManager.join name, @
+
+    /**
+     * Removes client from a room.
+     * Convenience function for RoomManager.leave
+     * @param {String} name Room name
+     */
+    leave: (name) ->
+        return @pool.roomManager.leave name, @
+
+    /**
      * @private
      * Starts the heartbeat loop
      */
