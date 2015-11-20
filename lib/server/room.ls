@@ -1,3 +1,5 @@
+require! 'debug'
+
 class Room
     (@name) ->
         @d = debug "socketeer:Room[#{@name}]"
