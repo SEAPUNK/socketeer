@@ -1,7 +1,7 @@
 socketeer
 ===
 
-[![npm version](https://img.shields.io/npm/v/socketeer.svg?style=flat-square)](https://npmjs.com/package/socketeer]
+[![npm version](https://img.shields.io/npm/v/socketeer.svg?style=flat-square)](https://npmjs.com/package/socketeer)
 
 ---
 
