@@ -98,7 +98,7 @@ class RoomManager
      */
     clear: ->
         @d "clearing rooms"
-        for room, name in @rooms
+        for name, room of @rooms
             continue if name is 'all'
             room.clear!
             delete @rooms[name]
@@ -110,8 +110,8 @@ class RoomManager
      * @param {Client} client Socketeer client
      */
     removeAll: (client) ->
-        @d "removing all clients from rooms except all"
-        for room, name in @rooms
+        @d "removing client from all rooms except 'all'"
+        for name, room of @rooms
             continue if name is 'all'
             room.remove client
 
