@@ -11,7 +11,7 @@ class SocketeerClient extends ClientAbstract
      * @param {Object} options Options passed to the ws module, with an additional
      *                         'heartbeatTimeout' parameter.
      */
-    (address, protocols, options) ->
+    (address, protocols, options={}) ->
         @d = debug 'socketeer:SocketeerClient'
         @construct-opts = do
             address: address

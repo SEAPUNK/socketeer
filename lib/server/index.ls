@@ -11,10 +11,11 @@ require! './room-manager':RoomManager
 EventEmitter = events.EventEmitter
 
 class SocketeerServer extends EventEmitter
-    ({
-        @heartbeat-timeout = 15000
-        @heartbeat-interval = 10000
-    }) ->
+    (options={}) ->
+        {
+            @heartbeat-timeout = 15000
+            @heartbeat-interval = 10000
+        } = options
         @d = debug 'socketeer:SocketeerServer'
         @d 'constructing new instance'
     
