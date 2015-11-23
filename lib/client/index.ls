@@ -148,7 +148,7 @@ class SocketeerClient extends ClientAbstract
         @closed = false
         @is-reconnection = true
         o = @construct-opts
-        ws = new WebSocket o.address, o.protocols, o.options
+        @ws = new WebSocket o.address, o.protocols, o.options
         @attach-events!
 
 module.exports = SocketeerClient
