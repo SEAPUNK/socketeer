@@ -56,7 +56,9 @@ class SocketeerServer extends EventEmitter
             perMessageDeflate: false
         
         @ws = new ws.Server opts, callback
-        @ws.on 'error', @handle-error
+        @ws.on 'error', @~handle-error
+        @ws.on 'headers', @~handle-headers
+        @ws.on 'connection', @~handle-connection
 
     /**
      * @private
