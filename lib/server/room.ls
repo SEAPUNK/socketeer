@@ -4,8 +4,7 @@ class Room
     (@name) ->
         @d = debug "socketeer:Room[#{@name}]"
         @d "constructing new instance"
-
-    clients: []
+        @clients = []
 
     /**
      * Adds a client to the room.

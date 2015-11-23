@@ -5,9 +5,8 @@ class RoomManager
     ->
         @d = debug 'socketeer:RoomManager'
         @d "constructing new instance"
+        @rooms = {}
         @rooms['all'] = new Room 'all'
-
-    rooms: {}
 
     /**
      * Creates a room

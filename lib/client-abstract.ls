@@ -13,10 +13,9 @@ class ClientAbstract extends EventEmitter
          */
         @_emit = @emit
         @emit = @~emit_
-
-    events: {}
-    actions: {}
-    action-callbacks: {}
+        @events = {}
+        @actions = {}
+        @action-callbacks = {}
 
     /**
      * @private

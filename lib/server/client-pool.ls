@@ -10,8 +10,7 @@ class ClientPool
         @d = debug 'socketeer:ClientPool'
         @d "constructing new client pool"
         @roomManager = @manager.room
-
-    pool: {}
+        @pool = {}
     
     /**
      * Adds a client to the pool
