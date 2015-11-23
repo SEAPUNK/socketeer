@@ -75,6 +75,7 @@ class ServerClient extends ClientAbstract
      * @param {Object} flags Flags
      */
     handle-message: (data, flags) ->
+        @d 'handling message'
         if data is 'h'
             return @handle-heartbeat!
         super ...
@@ -84,8 +85,10 @@ class ServerClient extends ClientAbstract
      * Handles ws 'close' event.
      * @param {Object} code Code
      * @param {Object} message Message
+     * @param {Object} errored Whether the socket closed because of an error.
      */
-    handle-close: (code, message) ->
+    handle-close: (code, message, errored) ->
+        @d 'handling close'
         # Leave all rooms
         @pool.roomManager.removeAll @
         @pool.roomManager._leaveAll @

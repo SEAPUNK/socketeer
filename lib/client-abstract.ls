@@ -46,17 +46,28 @@ class ClientAbstract extends EventEmitter
     handle-error: (err) ->
         @d "handling error (super): #{util.inspect err}"
         @_emit 'error', err
+        /*
+            We are emitting 'close' as well because the ws library does
+            not handle errors like net.Socket: error means that an error occured
+            and the socket is closed; there will be no 'close' event.
+
+            net.Socket's documentation states that if there is an 'error' event,
+            then the socket is pretty much dead. There is no way to recover.
+         */
+        # We will use close code 9999 just because we can.
+        @handle-close 9999, String(err), not not err
 
     /**
      * @private
      * Handles ws 'close' event.
      * @param {Object} code Code
      * @param {Object} message Message
+     * @param {Object} errored Whether the socket closed because of an error.
      */
-    handle-close: (code, message) ->
-        @d "handling close (super): #{util.inspect code}, message: #{util.inspect message}"
+    handle-close: (code, message, errored) ->
+        @d "handling close (super): #{util.inspect code}, message: #{util.inspect message}, errored: #{errored}"
         # Emit the close event
-        @_emit 'close', code, message
+        @_emit 'close', code, message, errored
 
     /**
      * @private

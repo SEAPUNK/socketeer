@@ -113,9 +113,10 @@ class SocketeerClient extends ClientAbstract
      * Handles ws 'close' event.
      * @param {Object} code Code
      * @param {Object} message Message
+     * @param {Object} errored Whether the socket closed because of an error.
      */
-    handle-close: (code, message) ->
-        @d "handling close: #{code}, #{message}"
+    handle-close: (code, message, errored) ->
+        @d "handling close"
         @ready = false
         @closed = true
         @stop-heartbeat-timeout!
