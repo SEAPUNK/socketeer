@@ -22,7 +22,7 @@ class SocketeerClient extends ClientAbstract
         @attach-events!
         @heartbeat-timeout = options.heartbeat-timeout or 15000
         @d "heartbeat timeout set to #{@heartbeat-timeout}"
-        super ws
+        super @ws
 
     /**
      * @private
@@ -62,7 +62,7 @@ class SocketeerClient extends ClientAbstract
                 # This means that the heartbeat interval data is invalid.
                 # Terminate the connnection, since we don't want to listen
                 #   to anything more that they have to say.
-                @emit 'error', new Error 'invalid heartbeat interval from server'
+                @_emit 'error', new Error 'invalid heartbeat interval from server'
                 return @terminate!
             @heartbeat-interval = interval
             @d "heartbeat interval set to #{@heartbeat-interval}"
@@ -83,7 +83,7 @@ class SocketeerClient extends ClientAbstract
         @heartbeat-timer = set-timeout ~>
             @d "heartbeat timeout called"
             # This means that the server took too long to send a timeout.
-            @emit 'timeout'
+            @_emit 'timeout'
             # Terminate the connection because it timed out: there's no
             # point to handshaking a close, since that is also likely to
             # time out.
@@ -106,7 +106,7 @@ class SocketeerClient extends ClientAbstract
         @d "handling open"
         @ready = true
         /** @TODO timeout for before the 'hi' message */
-        @emit 'open', @is-reconnection
+        @_emit 'open', @is-reconnection
 
     /**
      * @private
@@ -130,8 +130,8 @@ class SocketeerClient extends ClientAbstract
      *                              If callback is set, it emits a socket 'action',
      *                              rather than an 'event'.
      */
-    emit: (name, data, callback) ->
-        @d "emitting: #{name} - callback: #{callback}"
+    emit_: (name, data, callback) ->
+        @d "emitting: #{name}"
         if not @ready
             throw new Error "client is not ready"
         super ...

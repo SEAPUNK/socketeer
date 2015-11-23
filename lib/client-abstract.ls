@@ -1,5 +1,4 @@
 require! 'events'
-require! 'debug'
 require! 'util'
 
 {ActionResponse} = require './enums'
@@ -8,7 +7,12 @@ EventEmitter = events.EventEmitter
 
 class ClientAbstract extends EventEmitter
     (ws) ->
-        @ip = ws._socket.remote-address
+        /**
+         * Put the EventEmitter's emit into _emit
+         * Put our emitter into emit
+         */
+        @_emit = @emit
+        @emit = @~emit_
 
     events: {}
     actions: {}
@@ -31,7 +35,7 @@ class ClientAbstract extends EventEmitter
      */
     send: (data) ->
         data = JSON.stringify data
-        @d "sending data: #{data}"
+        @d "sending data (super): #{data}"
         @ws.send data
 
     /**
@@ -40,8 +44,8 @@ class ClientAbstract extends EventEmitter
      * @param {Object} err Error
      */
     handle-error: (err) ->
-        @d "handling error: #{util.inspect err}"
-        @emit 'error', err
+        @d "handling error (super): #{util.inspect err}"
+        @_emit 'error', err
 
     /**
      * @private
@@ -52,7 +56,7 @@ class ClientAbstract extends EventEmitter
     handle-close: (code, message) ->
         @d "handling close (super): #{util.inspect code}, message: #{util.inspect message}"
         # Emit the close event
-        @emit 'close', code, message
+        @_emit 'close', code, message
 
     /**
      * @private
@@ -61,7 +65,7 @@ class ClientAbstract extends EventEmitter
      * @param {Object} flags Flags
      */
     handle-message: (data, flags) ->
-        @d "handling message"
+        @d "handling message (super)"
         if typeof data is not 'string'
             @d "message is not string, ignoring"
             /** @TODO handle data other than JSON */
@@ -85,7 +89,7 @@ class ClientAbstract extends EventEmitter
      * @param {Object} data Data
      */
     handle-action: (data) ->
-        @d "handling action: #{util.inspect data}"
+        @d "handling action (super): #{util.inspect data}"
         if data.s
             return @_call-action-response-handler data
 
@@ -97,7 +101,7 @@ class ClientAbstract extends EventEmitter
      * @param {Object} data Data
      */
     handle-event: (data) ->
-        @d "handling event: #{util.inspect data}"
+        @d "handling event (super): #{util.inspect data}"
         @_call-event-handlers data
 
     /**
@@ -145,7 +149,6 @@ class ClientAbstract extends EventEmitter
                 i: data.i
                 a: data.a
                 s: ActionResponse.ERROR
-            throw err
     
     /**
      * @private
@@ -175,8 +178,8 @@ class ClientAbstract extends EventEmitter
      * Generates an action callback ID, for callback handling purposes.
      */
     _curActionId: 0
-    _generateActionId = ->
-        @d "generating action id: #{_curActionId}"
+    _generateActionId: ->
+        @d "generating action id: #{@_curActionId}"
         return @_curActionId++
 
     /**
@@ -187,7 +190,7 @@ class ClientAbstract extends EventEmitter
      * @param {Function} callback Action response callback
      */
     _emitAction: (name, data, callback) ->
-        @d "emitting action: #{name}"
+        @d "emitting action (super): #{name}"
         id = @_generateActionId!
         @action-callbacks[id] = callback
         @send do
@@ -202,7 +205,7 @@ class ClientAbstract extends EventEmitter
      * @param {Object} data Event data
      */
     _emitEvent: (name, data) ->
-        @d "emitting event: #{name}"
+        @d "emitting event (super): #{name}"
         @send do
             e: name
             d: data
@@ -240,8 +243,8 @@ class ClientAbstract extends EventEmitter
      *                              If callback is set, it emits a socket 'action',
      *                              rather than an 'event'.
      */
-    emit: (name, data, callback) ->
-        @d "emitting: #{name} - typeof callback: #{typeof callback}"
+    emit_: (name, data, callback) ->
+        @d "emitting (super): #{name} - typeof callback: #{typeof callback}"
         if typeof callback is 'function'
             @_emitAction name, data, callback
         else

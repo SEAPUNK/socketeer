@@ -19,18 +19,20 @@ class SocketeerServer extends EventEmitter
         } = options
         @d = debug 'socketeer:SocketeerServer'
         @d 'constructing new instance'
+        @room = new RoomManager!
+        @pool = new ClientPool @
     
     /**
      * keeps track of all rooms
      * @type {RoomManager}
      */
-    room: new RoomManager!
+    room: null
     
     /**
      * keeps track of all clients
      * @type {ClientPool}
      */
-    pool: new ClientPool @
+    pool: null
 
 
     /**
@@ -87,7 +89,7 @@ class SocketeerServer extends EventEmitter
         @d "got 'connection', creating client"
         id = @pool.add new Client connection
         client = @pool.get id
-        @room.join 'all', client
+        @room._joinAll client
         @emit 'connection', client
 
     /**

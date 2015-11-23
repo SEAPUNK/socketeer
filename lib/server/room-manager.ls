@@ -21,7 +21,7 @@ class RoomManager
             throw new Error "cannot create room 'all': reserved room name"
         return false if @rooms[name]
         @d "room doesn't exist, constructing"
-        rooms[name] = new Room name
+        @rooms[name] = new Room name
         return true
 
     /**
@@ -33,7 +33,7 @@ class RoomManager
     get: (name, create=true) ->
         @d "getting room #{name} | create: #{create}"
         @create name if create
-        return rooms[name]
+        return @rooms[name]
 
     /**
      * Adds a client to a room. Room is created if it doesn't exist.

@@ -1,7 +1,10 @@
 require! '../client-abstract':ClientAbstract
+require! 'debug'
 
 class ServerClient extends ClientAbstract
     (@ws) ->
+        @d = debug 'socketeer:SocketeerServerClient'
+        @ip = ws._socket.remote-address
         @attach-events!
         super ...
 
@@ -38,11 +41,12 @@ class ServerClient extends ClientAbstract
      * Starts the heartbeat loop
      */
     start-heartbeat: ->
+        @d 'starting heartbeat loop'
         @heartbeat-loop = set-timeout ~>
             @ws.send 'h'
             @heartbeat-timeout = set-timeout ~>
                 # Client timed out, and thus, we gotta kill the connection.
-                @emit 'timeout'
+                @_emit 'timeout'
                 @terminate!
             , @pool.manager.heartbeat-timeout
         , @pool.manager.heartbeat-interval
@@ -52,14 +56,16 @@ class ServerClient extends ClientAbstract
      * Handles heartbeats.
      */
     handle-heartbeat: ->
+        @d 'handling heartbeat'
         clear-timeout @heartbeat-timeout
-        start-heartbeat!
+        @start-heartbeat!
 
     /**
      * @private
      * Stops the heartbeat loop
      */
     stop-heartbeat: ->
+        @d 'stopping heartbeat loop'
         clear-timeout @heartbeat-loop
 
     /**
