@@ -98,6 +98,14 @@ class SocketeerServer extends EventEmitter
             .emit name, data
 
     /**
+     * Gets a room.
+     * Alias to this.room.get
+     * @param {String} name Room name
+     */
+    to: (name, create) ->
+        return @room.get name, create
+
+    /**
      * Stops the server, closing all connections, and clearing the pool.
      */
     stop: ->

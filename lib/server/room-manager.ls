@@ -27,10 +27,12 @@ class RoomManager
     /**
      * Gets a room.
      * @param {String} name Room name
+     * @param {Boolean=true} create Whether to create the room if it doesn't exist
      * @returns {Room} room Socketeer room
      */
-    get: (name) ->
-        @d "getting room #{name}"
+    get: (name, create=true) ->
+        @d "getting room #{name} | create: #{create}"
+        @create name if create
         return rooms[name]
 
     /**

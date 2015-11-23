@@ -132,13 +132,13 @@ class ClientAbstract extends EventEmitter
                 s: ActionResponse.NONEXISTENT
         try
             @d "calling action handler '#{data.a}'"
-            @actions[data.a] data.d, (data) ~>
+            @actions[data.a] data.d, (response) ~>
                 @d "action handler '#{data.a}' called back, responding"
                 @send do
                     i: data.i
                     a: data.a
                     s: ActionResponse.OK
-                    d: data
+                    d: response
         catch err
             @d "failed calling action handler: #{util.inspect err}"
             @send do
