@@ -1,2 +1,2 @@
-export client = require './client'
-export server = require './server'
+export Client = require './client'
+export Server = require './server'
