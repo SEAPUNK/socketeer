@@ -86,10 +86,10 @@ class ClientAbstract extends EventEmitter
         catch err
             @d "JSON parse failed, ignoring: #{util.inspect err}"
             return
-        if data.a
+        if data.a?
             @d "data is action"
             return @handle-action data
-        if data.e
+        if data.e?
             @d "data is event"
             return @handle-event data
 
@@ -100,9 +100,8 @@ class ClientAbstract extends EventEmitter
      */
     handle-action: (data) ->
         @d "handling action (super): #{util.inspect data}"
-        if data.s
+        if data.s?
             return @_call-action-response-handler data
-
         @_call-action-handler data
 
     /**
