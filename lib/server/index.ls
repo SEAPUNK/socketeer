@@ -2,6 +2,7 @@ require! 'ws'
 require! 'debug'
 require! 'suspend'
 require! 'events'
+require! 'util'
 
 require! './client-pool':ClientPool
 require! './client':Client
