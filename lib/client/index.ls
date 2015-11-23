@@ -18,10 +18,10 @@ class SocketeerClient extends ClientAbstract
             protocols: protocols
             options: options
         @d "constructing websocket with options: #{util.inspect @construct-opts}"
-        @ws = new WebSocket ...
-        @attach-events!
         @heartbeat-timeout = options.heartbeat-timeout or 15000
         @d "heartbeat timeout set to #{@heartbeat-timeout}"
+        @ws = new WebSocket ...
+        @attach-events!
         super @ws
 
     /**
