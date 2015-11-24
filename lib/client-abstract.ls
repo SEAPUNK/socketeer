@@ -86,13 +86,16 @@ class ClientAbstract extends EventEmitter
         catch err
             @d "JSON parse failed, ignoring: #{util.inspect err}"
             return
-        if data.a?
+
+        if data.a? or data.s?
             @d "data is action"
             return @handle-action data
-        if data.e?
+        else if data.e?
             @d "data is event"
             return @handle-event data
-
+        else
+            @d "data is unknown, ignoring"
+            return
     /**
      * @private
      * Handles an action.
