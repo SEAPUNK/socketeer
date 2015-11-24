@@ -8,8 +8,8 @@ class SocketeerClient extends ClientAbstract
      * Constructs a new instance.
      * @param {String} address Address passed to the ws module
      * @param {String|Array} protocols Protocols passed to the ws module
-     * @param {Object} options Options passed to the ws module, with an additional
-     *                         'heartbeatTimeout' parameter.
+     * @param {Object} options Options passed to the ws module, with additional
+     *                         'heartbeatTimeout' and 'reconnectWait' parameters.
      */
     (address, protocols, options={}) ->
         @d = debug 'socketeer:SocketeerClient'
@@ -19,6 +19,7 @@ class SocketeerClient extends ClientAbstract
             options: options
         @d "constructing websocket with options: #{util.inspect @construct-opts}"
         @heartbeat-timeout = options.heartbeat-timeout or 15000
+        @reconnect-wait = options.reconnect-wait or 5000
         @d "heartbeat timeout set to #{@heartbeat-timeout}"
         @ws = new WebSocket ...
         @attach-events!
@@ -149,11 +150,17 @@ class SocketeerClient extends ClientAbstract
         if not @closed
             @d "not closed, not going to reconnect"
             throw new Error "client has not disconnected to reconnect yet"
-        @d "reconnecting"
-        @closed = false
-        @is-reconnection = true
-        o = @construct-opts
-        @ws = new WebSocket o.address, o.protocols, o.options
-        @attach-events!
+        return if @will-reconnect
+        @will-reconnect = true
+        @d "will reconnect in #{@reconnect-wait} ms"
+        set-timeout ~>
+            @d "reconnecting"
+            @will-reconnect = false
+            @closed = false
+            @is-reconnection = true
+            o = @construct-opts
+            @ws = new WebSocket o.address, o.protocols, o.options
+            @attach-events!
+        , @reconnect-wait
 
 module.exports = SocketeerClient
