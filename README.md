@@ -5,7 +5,7 @@ socketeer
 
 ---
 
-a better socket framework, created as an alternative to socket.io
+a socket framework created as an alternative to socket.io
 
 [documentation](docs/README.md)
 
