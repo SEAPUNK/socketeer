@@ -104,8 +104,12 @@ class SocketeerClient extends ClientAbstract
      */
     handle-open: ->
         @d "handling open"
+        /**
+         * @TODO timeout for before the 'hi' message
+         * @TODO [protocol] don't 'ready' until 'hi' message is received
+         * @TODO [protocol] if not 'ready', then ignore all server messages (except for the heartbeat interval)
+         */
         @ready = true
-        /** @TODO timeout for before the 'hi' message */
         @_emit 'open', @is-reconnection
 
     /**

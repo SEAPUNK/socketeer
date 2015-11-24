@@ -141,23 +141,22 @@ class ClientAbstract extends EventEmitter
             @d "action '#{data.a}' does not exist"
             return @send do
                 i: data.i
-                a: data.a
                 s: ActionResponse.NONEXISTENT
+                d: null
         try
             @d "calling action handler '#{data.a}'"
             @actions[data.a] data.d, (response) ~>
                 @d "action handler '#{data.a}' called back, responding"
                 @send do
                     i: data.i
-                    a: data.a
                     s: ActionResponse.OK
                     d: response
         catch err
             @d "failed calling action handler: #{util.inspect err}"
             @send do
                 i: data.i
-                a: data.a
                 s: ActionResponse.ERROR
+                d: null
     
     /**
      * @private
