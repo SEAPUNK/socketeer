@@ -63,7 +63,7 @@ class SocketeerClient extends ClientAbstract
                 # Terminate the connnection, since we don't want to listen
                 #   to anything more that they have to say.
                 @_emit 'error', new Error 'invalid heartbeat interval from server'
-                return @terminate!
+                return @kill!
             @heartbeat-interval = interval
             @d "heartbeat interval set to #{@heartbeat-interval}"
             return @reset-heartbeat-timeout!
@@ -87,7 +87,7 @@ class SocketeerClient extends ClientAbstract
             # Terminate the connection because it timed out: there's no
             # point to handshaking a close, since that is also likely to
             # time out.
-            @terminate!
+            @kill!
         , timeoutPeriod
 
     /**

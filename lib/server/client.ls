@@ -47,7 +47,7 @@ class ServerClient extends ClientAbstract
             @heartbeat-timeout = set-timeout ~>
                 # Client timed out, and thus, we gotta kill the connection.
                 @_emit 'timeout'
-                @terminate!
+                @kill!
             , @pool.manager.heartbeat-timeout
         , @pool.manager.heartbeat-interval
 
