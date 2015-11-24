@@ -35,7 +35,7 @@ Where `{INT}` is a positive integer that indicates how long in milliseconds the 
 heartbeats
 ---
 
-Socketeer does its own form of heartbeats, because the Web API's websockets' ping/pongs do not have an API, and are implemented differently across platforms. <sup>[[1](http://stackoverflow.com/a/10586583)]</sup>
+Socketeer does its own form of heartbeats, because the Web API's websockets' ping/pongs do not have an API, and are implemented differently across platforms. <sup>[[1]](http://stackoverflow.com/a/10586583)</sup>
 
 The Socketeer server is the "master" for heartbeats. It sets the interval, is the only one that sends the "ping"s. The Socketeer client, upon receiving the server's heartbeat message must immediately respond with the "pong"s.
 
