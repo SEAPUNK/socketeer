@@ -167,7 +167,7 @@ class ClientAbstract extends EventEmitter
      * @param {Object} data Data
      */
     _call-action-response-handler: (data) ->
-        @d "action response handler for #{data.a}@#{data.i}"
+        @d "action response handler for #{data.i}"
         return if not @action-callbacks[data.i]
         @d "response handler exists, continuing"
         set-timeout ~>
