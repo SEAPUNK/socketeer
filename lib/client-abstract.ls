@@ -149,12 +149,19 @@ class ClientAbstract extends EventEmitter
                 d: null
         try
             @d "calling action handler '#{data.a}'"
-            @actions[data.a] data.d, (response) ~>
-                @d "action handler '#{data.a}' called back, responding"
-                @send do
-                    i: data.i
-                    s: ActionResponse.OK
-                    d: response
+            @actions[data.a] data.d, (err, response) ~>
+                if err
+                    @d "action handler '#{data.a}' errored, responding (#{util.inspect err})"
+                    @send do
+                        i: data.i
+                        s: ActionResponse.ERROR
+                        d: null
+                else
+                    @d "action handler '#{data.a}' called back, responding"
+                    @send do
+                        i: data.i
+                        s: ActionResponse.OK
+                        d: response
         catch err
             @d "failed calling action handler: #{util.inspect err}"
             @send do
