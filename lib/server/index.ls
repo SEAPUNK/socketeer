@@ -21,19 +21,8 @@ class SocketeerServer extends EventEmitter
         @d 'constructing new instance'
         @room = new RoomManager!
         @pool = new ClientPool @
-    
-    /**
-     * keeps track of all rooms
-     * @type {RoomManager}
-     */
-    room: null
-    
-    /**
-     * keeps track of all clients
-     * @type {ClientPool}
-     */
-    pool: null
-
+        @uses = []
+        @data = {}
 
     /**
      * starts the server listening on port {port}
@@ -85,9 +74,22 @@ class SocketeerServer extends EventEmitter
      * ws 'connection' handler
      * @param {Object} connection Connection
      */
-    handle-connection: (connection) ->
+    handle-connection: suspend (connection) ->*
+        /** @TODO connection pre-registration rejection messages */
         @d "got 'connection', creating client"
-        id = @pool.add new Client connection
+        client = new Client connection
+        @d "running #{@uses.length} middleware(s) on client"
+        for use in @uses
+            try
+                rejection-message = yield use client, suspend.resume!
+                if rejection-message
+                    /** @TODO reject this connection with an error message */
+                    client.kill!
+            catch err
+                @d "failed running a middleware on client: #{util.inspect err}"
+                /** @TODO reject this connection with an error message */
+                client.kill!
+        id = @pool.add client
         client = @pool.get id
         @room._joinAll client
         @emit 'connection', client
@@ -110,6 +112,13 @@ class SocketeerServer extends EventEmitter
      */
     to: (name, create) ->
         return @room.get name, create
+
+    /**
+     * Adds a middleware to the server.
+     * @param {Function} middleware Middleware
+     */
+    use: (middleware) ->
+        @uses.push middleware
 
     /**
      * Stops the server, closing all connections, and clearing the pool.

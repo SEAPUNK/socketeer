@@ -16,6 +16,11 @@ class ServerClient extends ClientAbstract
      * @param {ClientPool} pool Socketeer ClientPool
      */
     register: (@id, @pool) ->
+        /**
+         * @TODO prevent certain functions from being called
+         *     until the socket is registered
+         */
+        @registered = true
         interval = @pool.manager.heartbeat-interval
         @ws.send "hi#{interval}"
         @start-heartbeat!
@@ -85,20 +90,22 @@ class ServerClient extends ClientAbstract
      * @private
      * Handles ws 'close' event.
      * @param {Object} code Code
-     * @param {Object} message Message
-     * @param {Object} errored Whether the socket closed because of an error.
+     * @param {Object} message=null Message
+     * @param {Boolean} errored=false Whether the socket closed because of an error.
      */
-    handle-close: (code, message, errored) ->
+    handle-close: (code, message=null, errored=false) ->
         @d 'handling close'
-        # Leave all rooms
-        @pool.roomManager.removeAll @
-        @pool.roomManager._leaveAll @
 
-        # Stop the heartbeat loop
-        @stop-heartbeat!
+        if @registered
+            # Leave all rooms
+            @pool.roomManager.removeAll @
+            @pool.roomManager._leaveAll @
 
-        # Remove from client pool
-        @pool.remove @id
+            # Stop the heartbeat loop
+            @stop-heartbeat!
+
+            # Remove from client pool
+            @pool.remove @id
 
         super ...
 

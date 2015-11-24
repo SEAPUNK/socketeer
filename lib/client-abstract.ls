@@ -16,6 +16,7 @@ class ClientAbstract extends EventEmitter
         @events = {}
         @actions = {}
         @action-callbacks = {}
+        @data = {}
 
     /**
      * @private
@@ -60,10 +61,10 @@ class ClientAbstract extends EventEmitter
      * @private
      * Handles ws 'close' event.
      * @param {Object} code Code
-     * @param {Object} message Message
-     * @param {Object} errored Whether the socket closed because of an error.
+     * @param {Object} message=null Message
+     * @param {Boolean} errored=false Whether the socket closed because of an error.
      */
-    handle-close: (code, message, errored) ->
+    handle-close: (code, message, errored=false) ->
         @d "handling close (super): #{util.inspect code}, message: #{util.inspect message}, errored: #{errored}"
         # Emit the close event
         @_emit 'close', code, message, errored
