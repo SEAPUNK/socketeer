@@ -57,7 +57,7 @@ class ServerClient extends ClientAbstract
      */
     handle-heartbeat: ->
         @d 'handling heartbeat'
-        clear-timeout @heartbeat-timeout
+        @stop-heartbeat!
         @start-heartbeat!
 
     /**
@@ -67,6 +67,7 @@ class ServerClient extends ClientAbstract
     stop-heartbeat: ->
         @d 'stopping heartbeat loop'
         clear-timeout @heartbeat-loop
+        clear-timeout @heartbeat-timeout
 
     /**
      * @private
