@@ -8,7 +8,7 @@ class ClientPool
      */
     (@manager) ->
         @d = debug 'socketeer:ClientPool'
-        @d "constructing new client pool"
+        @d "constructing new instance"
         @roomManager = @manager.room
         @pool = {}
     
