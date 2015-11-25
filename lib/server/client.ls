@@ -10,12 +10,23 @@ class ServerClient extends ClientAbstract
 
     /**
      * @private
+     * Sets the ServerClient ID. Throws an error if it's already set.
+     * @param {String} id Socket ID
+     */
+    set-id: (id) ->
+        @d "setting client ID to #{id}"
+        if @id
+            @d "could not set ID (already set)"
+            throw new Error "socket already has an ID"
+        @id = id
+
+    /**
+     * @private
      * Registers the client to the Socketeer manager.
      * Must be called before anything else is done with the client.
-     * @param {String} id Client ID
      * @param {ClientPool} pool Socketeer ClientPool
      */
-    register: (@id, @pool) ->
+    register: (@pool) ->
         /**
          * @TODO prevent certain functions from being called
          *     until the socket is registered

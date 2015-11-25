@@ -11,19 +11,20 @@ class ClientPool
         @d "constructing new instance"
         @roomManager = @manager.room
         @pool = {}
+        @reserved = {}
     
     /**
      * Adds a client to the pool
      * @param {Client} client Socketeer client
+     * @param {String} id ID to use
      * @returns {String} id Client ID
      */
-    add: (client) ->
+    add: (client, id) ->
         @d "adding client to pool"
-        while true
-            id = uuid.v4!
-            break if not @pool[id]
-        @d "generated client pool id: #{id}"
-        client.register id, @, @room-manager
+        if @pool[id]
+            throw new Error "id #{id} is already in the pool (should never happen)"
+        delete @reserved[id]
+        client.register @
         @pool[id] = client
         return id
 
@@ -37,10 +38,21 @@ class ClientPool
         return @pool[id]
 
     /**
+     * Generates (and reserves) an ID to use for the pool
+     */
+    generate-id: ->
+        @d "generating and reserving a new id"
+        while true
+            id = uuid.v4!
+            break if not @pool[id] and not @reserved[id]
+        @reserved[id] = true
+        @d "generated client pool id: #{id}"
+
+    /**
      * Runs a function on all clients in the pool
      * @param {Function} func Function to use on each client
      */
-    forEach: (func) ->
+    for-each: (func) ->
         @d "running a foreach function on pool"
         for client of @pool
             func client

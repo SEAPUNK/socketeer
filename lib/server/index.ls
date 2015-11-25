@@ -78,6 +78,8 @@ class SocketeerServer extends EventEmitter
         /** @TODO connection pre-registration rejection messages */
         @d "got 'connection', creating client"
         client = new Client connection
+        id = @pool.generate-id!
+        client.set-id id
         @d "running #{@uses.length} middleware(s) on client"
         for use in @uses
             try
@@ -89,7 +91,7 @@ class SocketeerServer extends EventEmitter
                 @d "failed running a middleware on client: #{util.inspect err}"
                 /** @TODO reject this connection with an error message */
                 client.kill!
-        id = @pool.add client
+        @pool.add client, id
         client = @pool.get id
         @room._joinAll client
         @emit 'connection', client
