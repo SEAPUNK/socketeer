@@ -21,6 +21,8 @@ class SocketeerClient extends ClientAbstract
         @heartbeat-timeout = options.heartbeat-timeout or 15000
         @reconnect-wait = options.reconnect-wait or 5000
         @d "heartbeat timeout set to #{@heartbeat-timeout}"
+        @closed = false
+        @ready = false
         @ws = new WebSocket ...
         @attach-events!
         super @ws
@@ -106,7 +108,7 @@ class SocketeerClient extends ClientAbstract
     handle-open: ->
         @d "handling open"
         /**
-         * @TODO timeout for before the 'hi' message
+         * @TODO [protocol] timeout for before the 'hi' message
          * @TODO [protocol] don't 'ready' until 'hi' message is received
          * @TODO [protocol] if not 'ready', then ignore all server messages (except for the heartbeat interval)
          */
