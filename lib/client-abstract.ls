@@ -146,7 +146,7 @@ class ClientAbstract extends EventEmitter
             return @send do
                 i: data.i
                 s: ActionResponse.NONEXISTENT
-                d: null
+                d: ActionResponse.NONEXISTENT
         try
             @d "calling action handler '#{data.a}'"
             @actions[data.a] data.d, (err, response) ~>
@@ -155,7 +155,7 @@ class ClientAbstract extends EventEmitter
                     @send do
                         i: data.i
                         s: ActionResponse.ERROR
-                        d: null
+                        d: ActionResponse.ERROR
                 else
                     @d "action handler '#{data.a}' called back, responding"
                     @send do
@@ -167,7 +167,7 @@ class ClientAbstract extends EventEmitter
             @send do
                 i: data.i
                 s: ActionResponse.ERROR
-                d: null
+                d: ActionResponse.ERROR
     
     /**
      * @private
