@@ -47,6 +47,7 @@ class ClientPool
             break if not @pool[id] and not @reserved[id]
         @reserved[id] = true
         @d "generated client pool id: #{id}"
+        return id
 
     /**
      * Runs a function on all clients in the pool
