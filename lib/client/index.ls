@@ -132,6 +132,9 @@ class SocketeerClient extends ClientAbstract
     /**
      * Emits an event with event data.
      * Throws an error if not finished connecting.
+     *
+     * @note This function is renamed to 'emit' once an instance is created
+     * 
      * @param {String} name Event name
      * @param {Object} data Event data
      * @param {Function} [callback] Callback for action handlers.
@@ -146,8 +149,10 @@ class SocketeerClient extends ClientAbstract
 
     /**
      * Reconnects to server.
+     *
+     * @param {Boolean} immediate Whether to ignore the set reconnectWait option.
      */
-    reconnect: ->
+    reconnect: (immediate) ->
         @d "trying reconnect"
         if not @closed
             @d "not closed, not going to reconnect"
@@ -155,6 +160,7 @@ class SocketeerClient extends ClientAbstract
         return if @will-reconnect
         @will-reconnect = true
         @d "will reconnect in #{@reconnect-wait} ms"
+        timeout = if immediate then 0 else @reconnect-wait
         set-timeout ~>
             @d "reconnecting"
             @will-reconnect = false
@@ -163,6 +169,6 @@ class SocketeerClient extends ClientAbstract
             o = @construct-opts
             @ws = new WebSocket o.address, o.protocols, o.options
             @attach-events!
-        , @reconnect-wait
+        , timeout
 
 module.exports = SocketeerClient

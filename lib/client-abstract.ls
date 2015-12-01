@@ -256,6 +256,9 @@ class ClientAbstract extends EventEmitter
 
     /**
      * Emits an event with event data.
+     *
+     * @note This function is renamed to 'emit' once an instance is created.
+     *
      * @param {String} name Event name
      * @param {Object} data Event data
      * @param {Function} [callback] Callback for action handlers.
