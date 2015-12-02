@@ -51,6 +51,8 @@ Occurs when the socket opens, but before Socketeer completes the handshake. Use 
 
 - `isReconnection` - Whether the opened connection is the result of a reconnection via `reconnect()`
 
+---
+
 <a name="SocketeerClient-event-open"></a>
 `SocketeerClient: 'open' event (isReconnection)`
 
