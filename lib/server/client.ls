@@ -101,10 +101,10 @@ class ServerClient extends ClientAbstract
      * @private
      * Handles ws 'close' event.
      * @param {Object} code Code
-     * @param {Object} message=null Message
-     * @param {Boolean} errored=false Whether the socket closed because of an error.
+     * @param {Object} message Message
+     * @param {Boolean} error Error, if the socket closed due to an error.
      */
-    handle-close: (code, message=null, errored=false) ->
+    handle-close: (code, message, error) ->
         @d 'handling close'
 
         if @registered

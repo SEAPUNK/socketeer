@@ -113,6 +113,7 @@ class SocketeerClient extends ClientAbstract
          * @TODO [protocol] if not 'ready', then ignore all server messages (except for the heartbeat interval)
          */
         @ready = true
+        @_emit '_open', @is-reconnection
         @_emit 'open', @is-reconnection
 
     /**
@@ -120,9 +121,9 @@ class SocketeerClient extends ClientAbstract
      * Handles ws 'close' event.
      * @param {Object} code Code
      * @param {Object} message Message
-     * @param {Object} errored Whether the socket closed because of an error.
+     * @param {Object} error Error, if the socket closed due to an error.
      */
-    handle-close: (code, message, errored) ->
+    handle-close: (code, message, error) ->
         @d "handling close"
         @ready = false
         @closed = true

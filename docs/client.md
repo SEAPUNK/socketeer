@@ -8,6 +8,7 @@ Extends `ClientAbstract`.
 - [new SocketeerClient(address, protocols, options)](#SocketeerClient)
 - [SocketeerClient.emit(name, data, callback)](#SocketeerClient-emit)
 - [SocketeerClient.reconnect(immediate)](#SocketeerClient-reconnect)
+- [SocketeerClient: `_open` (isReconnection)](#SocketeerClient-event-_open)
 - [SocketeerClient: `open` (isReconnection)](#SocketeerClient-event-open)
 
 
@@ -16,7 +17,7 @@ Extends `ClientAbstract`.
 <a name="SocketeerClient"></a>
 `new socketeer.Client(address, protocols, options) -> SocketeerClient`
 
-Creates an instance of `SocketeerClient`. All arguments are passed to [the `ws` library](https://github.com/websockets/ws/blob/master/doc/ws.md#new-wswebsocketaddress-protocols-options).
+Creates an instance of `SocketeerClient`. All arguments are passed to [the `ws` library](https://github.com/websockets/ws/blob/master/doc/ws.md#new-wswebsocketaddress-protocols-options). As soon as this class is constructed, the client attempts to connect to the socket.
 
 - `address` - address that the `ws` library accepts
 - `protocols` - protocols that the `ws` library accepts
@@ -29,13 +30,7 @@ Creates an instance of `SocketeerClient`. All arguments are passed to [the `ws` 
 <a name="SocketeerClient-emit"></a>
 `SocketeerClient.emit(name, data, callback?)` **overrides the ClientAbstract's emit function**
 
-Emits an event on an action, depending on the existence of `callback`.
-Throws an error if not ready.
-
-- `name` - Event/action name to emit
-- `data` - Data to include with the event/action
-- `callback` - *optional* Function to use for the action response.
-    + If callback is not a function, then the client will emit an event.
+Same as ClientAbstract's emit, except this function throws an error if the client is not ready.
 
 ---
 
@@ -49,5 +44,16 @@ Throws an error if the connection is not closed. Waits for `reconnectWait` ms be
 
 ---
 
+<a name="SocketeerClient-event-_open"></a>
+`SocketeerClient: '_open' event (isReconnection)`
+
+Occurs when the socket opens, but before Socketeer completes the handshake. Use this event only if you know what you're doing.
+
+- `isReconnection` - Whether the opened connection is the result of a reconnection via `reconnect()`
+
 <a name="SocketeerClient-event-open"></a>
-`SocketeerClient: 'open' event`
+`SocketeerClient: 'open' event (isReconnection)`
+
+Occurs when Socketeer completes the handshake with the server.
+
+- `isReconnection` - Whether the opened connection is the result of a reconnection via `reconnect()`

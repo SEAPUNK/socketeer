@@ -54,20 +54,19 @@ class ClientAbstract extends EventEmitter
             net.Socket's documentation states that if there is an 'error' event,
             then the socket is pretty much dead. There is no way to recover.
          */
-        # We will use close code 9999 just because we can.
-        @handle-close 9999, String(err), not not err
+        @handle-close null, null, err
 
     /**
      * @private
      * Handles ws 'close' event.
      * @param {Object} code Code
-     * @param {Object} message=null Message
-     * @param {Boolean} errored=false Whether the socket closed because of an error.
+     * @param {Object} message Message
+     * @param {Error} error=null Error, if the socket closed due to an error.
      */
-    handle-close: (code, message, errored=false) ->
-        @d "handling close (super): #{util.inspect code}, message: #{util.inspect message}, errored: #{errored}"
+    handle-close: (code, message, error=null) ->
+        @d "handling close (super): #{util.inspect code}, message: #{util.inspect message}, error: #{error.stack or error}"
         # Emit the close event
-        @_emit 'close', code, message, errored
+        @_emit 'close', code, message, error
 
     /**
      * @private
@@ -151,11 +150,12 @@ class ClientAbstract extends EventEmitter
             @d "calling action handler '#{data.a}'"
             @actions[data.a] data.d, (err, response) ~>
                 if err
-                    @d "action handler '#{data.a}' errored, responding (#{util.inspect err})"
+                    @d "action handler '#{data.a}' errored (callback fail), responding (#{util.inspect err})"
                     @send do
                         i: data.i
                         s: ActionResponse.ERROR
                         d: ActionResponse.ERROR
+                    throw err
                 else
                     @d "action handler '#{data.a}' called back, responding"
                     @send do
@@ -163,11 +163,12 @@ class ClientAbstract extends EventEmitter
                         s: ActionResponse.OK
                         d: response
         catch err
-            @d "failed calling action handler: #{util.inspect err}"
+            @d "action handler '#{data.a}' errored (call fail), responding (#{util.inspect err})"
             @send do
                 i: data.i
                 s: ActionResponse.ERROR
                 d: ActionResponse.ERROR
+            throw err
     
     /**
      * @private
@@ -275,9 +276,9 @@ class ClientAbstract extends EventEmitter
     /**
      * Closes the connection gracefully.
      */
-    close: ->
+    close: (code, data) ->
         @d "closing connection"
-        @ws.close!
+        @ws.close code, data
 
     /**
      * Closes the connection, less gracefully.
