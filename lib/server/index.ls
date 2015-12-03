@@ -75,7 +75,6 @@ class SocketeerServer extends EventEmitter
      * @param {Object} connection Connection
      */
     handle-connection: suspend (connection) ->*
-        /** @TODO connection pre-registration rejection messages */
         @d "got 'connection', creating client"
         client = new Client connection
         id = @pool.generate-id!
@@ -85,12 +84,10 @@ class SocketeerServer extends EventEmitter
             try
                 rejection-message = yield use client, suspend.resume!
                 if rejection-message
-                    /** @TODO reject this connection with an error message */
-                    client.kill!
+                    client.close 4002, rejection-message
             catch err
                 @d "failed running a middleware on client: #{util.inspect err}"
-                /** @TODO reject this connection with an error message */
-                client.kill!
+                client.close 4001, "failed executing middleware"
         @pool.add client, id
         client = @pool.get id
         @room._joinAll client
