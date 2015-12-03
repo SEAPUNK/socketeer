@@ -76,6 +76,9 @@ class ClientAbstract extends EventEmitter
      */
     handle-message: (data, flags) ->
         @d "handling message (super)"
+        if @ws.readyState is @ws.CLOSING
+        or @ws.readyState is @ws.CLOSED
+            return @d "ignoring message, as socket is closing (this should not happen!)"
         if typeof data is not 'string'
             @d "message is not string, ignoring"
             /** @TODO handle data other than JSON */

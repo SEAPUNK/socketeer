@@ -93,6 +93,9 @@ class ServerClient extends ClientAbstract
      */
     handle-message: (data, flags) ->
         @d 'handling message'
+        if @ws.readyState is @ws.CLOSING
+        or @ws.readyState is @ws.CLOSED
+            return @d "ignoring message, as socket is closing"
         if data is 'h'
             return @handle-heartbeat!
         super ...
