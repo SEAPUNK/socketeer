@@ -64,7 +64,7 @@ class ClientAbstract extends EventEmitter
      * @param {Error} error=null Error, if the socket closed due to an error.
      */
     handle-close: (code, message, error=null) ->
-        @d "handling close (super): #{util.inspect code}, message: #{util.inspect message}, error: #{error.stack or error}"
+        @d "handling close (super): #{util.inspect code}, message: #{util.inspect message}, error: #{error?.stack or error}"
         # Emit the close event
         @_emit 'close', code, message, error
 
