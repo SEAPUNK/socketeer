@@ -1,2 +1,2 @@
-export Client from './client'
-export Server from './server'
+export {client as Client} from './client'
+export {server as Server} from './server'
