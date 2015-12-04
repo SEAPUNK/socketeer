@@ -6,7 +6,7 @@ var shell = require('gulp-shell')
 gulp.task('default', ['build', 'docs'])
 
 gulp.task('build', function () {
-  return gulp.src('src/index.js')
+  return gulp.src('src/**/*.js')
     // .pipe(standard())
     // .pipe(standard.reporter('default', {breakOnError: true}))
     .pipe(babel())
