@@ -7,8 +7,8 @@ gulp.task('default', ['build', 'docs'])
 
 gulp.task('build', function () {
   return gulp.src('src/index.js')
-    .pipe(standard())
-    .pipe(standard.reporter('default', {breakOnError: true}))
+    // .pipe(standard())
+    // .pipe(standard.reporter('default', {breakOnError: true}))
     .pipe(babel())
     .pipe(gulp.dest('lib/'))
 })
