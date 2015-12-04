@@ -41,7 +41,8 @@
     "gulp-shell": "^0.5.1",
     "gulp-standard": "^5.2.2",
     "jsdoc": "^3.4.0",
-    "mocha": "^2.3.4"
+    "mocha": "^2.3.4",
+    "standard": "^5.4.1"
   },
   "standard": {
     "parser": "babel-eslint"
