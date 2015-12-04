@@ -1,2 +1,1 @@
-require('livescript')
-module.exports = require('./lib/socketeer')
+module.exports = require('./lib')
