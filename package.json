@@ -4,7 +4,8 @@
   "description": "a better way to do websockets",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "standard && mocha",
+    "build": "gulp"
   },
   "repository": {
     "type": "git",
@@ -40,5 +41,8 @@
     "gulp-standard": "^5.2.2",
     "jsdoc": "^3.4.0",
     "mocha": "^2.3.4"
+  },
+  "standard": {
+    "parser": "babel-eslint"
   }
 }
