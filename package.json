@@ -28,6 +28,7 @@
     "babel-polyfill": "^6.3.14",
     "debug": "^2.2.0",
     "deep-exists": "^1.0.0",
+    "maybestack": "^1.0.0",
     "suspend": "^0.7.0",
     "uuid": "^2.0.1",
     "ws": "^0.8.0"

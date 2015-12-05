@@ -1,6 +1,6 @@
 var gulp = require('gulp')
 var babel = require('gulp-babel')
-var standard = require('gulp-standard')
+// var standard = require('gulp-standard')
 var shell = require('gulp-shell')
 
 gulp.task('default', ['build', 'docs'])

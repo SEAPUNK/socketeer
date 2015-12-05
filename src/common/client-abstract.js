@@ -1,6 +1,7 @@
 import {EventEmitter} from 'events'
 import {inspect} from 'util'
 import {ActionResponse} from './enums'
+import maybeStack from 'maybestack'
 import exists from 'deep-exists'
 
 export default class ClientAbstract extends EventEmitter {
@@ -30,7 +31,7 @@ export default class ClientAbstract extends EventEmitter {
   }
 
   _handleError (err) {
-    this.d(`[super] handling error: ${inspect(err)}`)
+    this.d(`[super] handling error: ${maybeStack(err)}`)
     this._emit('error', err)
     /*
       We are emitting 'close' as well because the ws library does
@@ -44,10 +45,10 @@ export default class ClientAbstract extends EventEmitter {
   }
 
   _handleClose (code, message, error = null) {
-    this._d(`[super] handling close: `+
-      `code: ${inspect(code)}, `+
-      `message: ${inspect(message)}, `+
-      `error: ${(exists(error, 'stack')) ? error.stack : error}`)
+    this._d(`[super] handling close: ` +
+      `code: ${inspect(code)}, ` +
+      `message: ${inspect(message)}, ` +
+      `error: ${maybeStack(error)}`)
     this._emit('close', code, message, error)
   }
 
@@ -73,7 +74,7 @@ export default class ClientAbstract extends EventEmitter {
       this._d(`parsing message JSON: ${data}`)
       data = JSON.parse(data)
     } catch (err) {
-      this._d(`JSON parse failed, ignoring: ${(exists(err, 'stack')) ? err.stack : err}`)
+      this._d(`JSON parse failed, ignoring: ${maybeStack(err)}`)
       return
     }
 
@@ -106,11 +107,12 @@ export default class ClientAbstract extends EventEmitter {
         d: ActionResponse.NONEXISTENT
       })
     }
+    /** @todo clean up to use suspend */
     try {
       this._d('calling action handler')
       handler(data.d, (err, response) => {
         if (err) {
-          this._d(`action handler ${data.a} errored (callback fail), responding (${(exists(err, 'stack')) ? err.stack : err})`)
+          this._d(`action handler ${data.a} errored (callback fail), responding (${maybeStack(err)})`)
           this.send({
             i: data.i,
             s: ActionResponse.ERROR,
@@ -127,11 +129,11 @@ export default class ClientAbstract extends EventEmitter {
         }
       })
     } catch (err) {
-      this._d(`action handler errored (call fail), responding (${exists(err, 'stack') ? err.stack : err})`)
+      this._d(`action handler errored (call fail), responding (${maybeStack(err)})`)
       this.send({
         i: data.i,
         s: ActionResponse.ERROR,
-        d: ActionRepsonse.ERROR
+        d: ActionResponse.ERROR
       })
       throw err
     }
@@ -167,10 +169,6 @@ export default class ClientAbstract extends EventEmitter {
     if (!this._events[data.e]) return
     let handlers = this._events[data.e]
     this._d(`event handlers for '${data.e}' exist, there are ${handlers.length} handlers`)
-    handlers.forEach((evt) => {
-      setTimeout(() => {
-        evt(data.d)
-      })
-    })
+    handlers.forEach((evt) => setTimeout(() => evt(data.d)))
   }
 }
