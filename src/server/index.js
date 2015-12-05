@@ -21,18 +21,14 @@ export default class SocketeerServer extends EventEmitter {
     this.data = {}
   }
 
-  _emit (name, data) {
-    super.emit(name, data)
-  }
-
   _handleError (err) {
     this._d(`got 'error', ${maybeStack(err)}`)
-    this._emit('error', err)
+    this.emit('error', err)
   }
 
   _handleHeaders (headers) {
     this._d(`got 'headers', ${inspect(headers)}`)
-    this._emit('headers', headers)
+    this.emit('headers', headers)
   }
 
   start (port, callback) {
@@ -98,5 +94,5 @@ SocketeerServer.prototype._handleConnection = suspend(function *(connection) {
   }
   this.pool.add(client, id)
   this.room._joinAll(client)
-  this._emit('connection', client)
+  this.emit('connection', client)
 })
