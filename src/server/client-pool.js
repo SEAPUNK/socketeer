@@ -38,7 +38,7 @@ export default class ClientPool {
 
   forEach (fn) {
     this._d('running a foreach function on pool')
-    for (let client in this.pool) fn(client)
+    for (let id in this.pool) fn(this.pool[id])
   }
 
   remove (id) {
