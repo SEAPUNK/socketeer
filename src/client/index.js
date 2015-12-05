@@ -58,7 +58,7 @@ export default class SocketeerClient extends ClientAbstract {
       let interval = +reg[1]
       if (Number.isNaN(interval) || !interval) {
         // This means that the heartbeat interval data is invalid.
-        // Termiante the connection, since we don't want to listen 
+        // Terminate the connection, since we don't want to listen
         //  to anything more that they have to say.
         this._emit('error', new Error('invalid heartbeat interval from server'))
         this.kill()
@@ -90,7 +90,6 @@ export default class SocketeerClient extends ClientAbstract {
       //  point to handshaking a close, since that is also likely to
       //  time out.
       this.kill()
-
     }, timeoutPeriod)
   }
 
@@ -128,7 +127,7 @@ export default class SocketeerClient extends ClientAbstract {
 
   reconnect (immediate) {
     this._d('trying reconnect')
-    if (!closed) {
+    if (!this.closed) {
       this._d('not closed, not going to reconnect')
       throw new Error('client has not disconnected to reconnect yet')
     }
