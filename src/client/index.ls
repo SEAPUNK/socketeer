@@ -138,7 +138,7 @@ class SocketeerClient extends ClientAbstract
      * Throws an error if not finished connecting.
      *
      * @note This function is renamed to 'emit' once an instance is created
-     * 
+     *
      * @param {String} name Event name
      * @param {Object} data Event data
      * @param {Function} [callback] Callback for action handlers.

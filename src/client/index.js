@@ -4,6 +4,19 @@ import debug from 'debug'
 import {inspect} from 'util'
 
 export default class SocketeerClient extends ClientAbstract {
+  /**
+   * Create the client.
+   * @see [ws.WebSocket]{@link https://github.com/websockets/ws/blob/master/doc/ws.md#new-wswebsocketaddress-protocols-options}
+   * @extends ClientAbstract
+   * @param  {String} address Address to connect to.
+   * @param  {String|Array} protocols Protocols to accept.
+   * @param  {Object} options={} Options to accept.
+   * @param  {Number} options.heartbeatTimeout=15000 Time to wait in ms for 'ping' event
+   *                                                 before timing out the connection.
+   * @param  {Number} options.reconnectWait=5000 Time to wait in msbefore re-establishing
+   *                                             connection when `reconnect()` is called.
+   * @return {SocketeerClient} Client.
+   */
   constructor (address, protocols, options = {}) {
     super()
     this._d = debug('socketeer:SocketeerClient')
@@ -23,18 +36,33 @@ export default class SocketeerClient extends ClientAbstract {
     this._attachEvents()
   }
 
+  /**
+   * Attaches events to the socket.
+   * @protected
+   */
   _attachEvents () {
     this._d('attaching events')
     this.ws.on('open', this._handleOpen.bind(this))
     super._attachEvents()
   }
 
+  /**
+   * Handles heartbeats sent from the server.
+   * @protected
+   */
   _handleHeartbeat () {
     this._d('handling heartbeat')
     this._resetHeartbeatTimeout()
     this.ws.send('h')
   }
 
+  /**
+   * Event handler for WebSocket's 'message' event.
+   * Handles messages sent from the server.
+   * @protected
+   * @param  data  Data.
+   * @param  flags Data flags.
+   */
   _handleMessage (data, flags) {
     this._d('handling message')
     if (
@@ -98,14 +126,16 @@ export default class SocketeerClient extends ClientAbstract {
     clearTimeout(this._heartbeatTimer)
   }
 
+  /**
+   * Handles the WebSocket 'open' event.
+   * @protected
+   * @todo protocol: timeout for before the 'hi' message
+   * @todo protocol: don't 'ready' until the 'hi' message is received
+   * @todo protocol: if not 'ready', then ignore all server messages
+   *       (except for the heartbeat interval)
+   */
   _handleOpen () {
     this._d('handling open')
-    /**
-     * @todo  protocol: timeout for before the 'hi' message
-     * @todo  protocol: don't 'ready' until 'hi' message is received
-     * @todo  protocol: if not 'ready', then ignore all server messages
-     *        (except for the heartbeat interval)
-     */
     this.ready = true
     this._emit('_open', this.isReconnection)
     this._emit('open', this.isReconnection)
