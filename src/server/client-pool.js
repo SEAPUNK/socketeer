@@ -8,13 +8,14 @@ export default class ClientPool {
     this._roomManager = manager.room
     this.pool = {}
     this._reserved = {}
+    this._manager = manager
   }
 
   add (client, id) {
     this._d(`adding client ${id} to pool`)
     if (this.pool[id]) throw new Error(`id ${id} is already in the pool (should never happen)`)
     delete this._reserved[id]
-    client.register(this)
+    client._register(this)
     this.pool[id] = client
     return id
   }

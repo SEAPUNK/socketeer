@@ -76,8 +76,8 @@ export default class SocketeerServer extends EventEmitter {
 SocketeerServer.prototype._handleConnection = suspend(function *(connection) {
   this._d('got connection, creating client')
   let client = new Client(connection)
-  let id = this.pool.generateId()
-  client.setId(id)
+  let id = this.pool._generateId()
+  client._setId(id)
   this._d(`running ${this._uses.length} middleware(s) on client`)
   for (let use of this._uses) {
     try {
