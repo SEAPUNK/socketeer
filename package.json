@@ -4,7 +4,9 @@
   "description": "a better way to do websockets",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "build": "gulp",
+    "prepublish": "npm run build && npm run test"
   },
   "repository": {
     "type": "git",
@@ -24,14 +26,30 @@
   },
   "homepage": "https://github.com/SEAPUNK/socketeer#readme",
   "dependencies": {
+    "babel-polyfill": "^6.3.14",
     "debug": "^2.2.0",
-    "livescript": "^1.4.0",
+    "deep-exists": "^1.0.0",
+    "maybestack": "^1.0.0",
     "suspend": "^0.7.0",
     "uuid": "^2.0.1",
     "ws": "^0.8.0"
   },
   "devDependencies": {
+    "babel-core": "^6.3.13",
+    "babel-eslint": "^5.0.0-beta4",
+    "babel-preset-es2015": "^6.3.13",
+    "babel-preset-stage-0": "^6.3.13",
     "chai": "^3.4.1",
-    "mocha": "^2.3.4"
+    "gulp": "^3.9.0",
+    "gulp-babel": "^6.1.1",
+    "gulp-shell": "^0.5.1",
+    "gulp-standard": "^5.2.2",
+    "jsdoc": "^3.4.0",
+    "minami": "^1.1.1",
+    "mocha": "^2.3.4",
+    "standard": "^5.4.1"
+  },
+  "standard": {
+    "parser": "babel-eslint"
   }
 }

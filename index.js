@@ -1,2 +1,2 @@
-require('livescript')
-module.exports = require('./lib/socketeer')
+require('babel-polyfill')
+module.exports = require('./lib')

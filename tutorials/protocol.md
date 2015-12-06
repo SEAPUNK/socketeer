@@ -1,6 +1,3 @@
-protocol
-===
-
 This is documentation for the Socketeer protocol and how it should work, for if you want to create your own Socketeer-compatible library, or want to know how it works.
 
 - [websocket](#websocket)
