@@ -1,5 +1,8 @@
 {
   "protocol": {
     "title": "Socketeer protocol"
+  },
+  "usage": {
+    "title": "Socketeer usage"
   }
 }
