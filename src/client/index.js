@@ -40,7 +40,6 @@ export default class SocketeerClient extends ClientAbstract {
   /**
    * Attaches events to the socket. Listens to WebSocket's 'open' event, and lets
    * ClientAbstract handle the rest.
-   * @see ClientAbstract._attachEvents
    * @protected
    */
   _attachEvents () {
@@ -61,13 +60,12 @@ export default class SocketeerClient extends ClientAbstract {
 
   /**
    * Event handler for WebSocket's 'message' event.
+   *
    * Handles messages sent from the server; ignores all messages if socket is
    * is in a "CLOSING" or "CLOSED" state.
-   * @todo Handling of binary data
-   * @see ClientAbstract._handleMessage
    * @protected
-   * @param  data  Data.
-   * @param  flags Data flags.
+   * @param  data  WebSocket data.
+   * @param  flags WebSocket data flags.
    */
   _handleMessage (data, flags) {
     this._d('handling message')
@@ -85,7 +83,7 @@ export default class SocketeerClient extends ClientAbstract {
       return
     }
 
-    if (String(data).indexOf('hi') === 0) {
+    if (typeof data === 'string' && data.indexOf('hi') === 0) {
       this._d('message is heartbeat interval')
       this._d(`data: ${data}`)
       let reg = /^hi(.*)$/.exec(String(data))
@@ -144,6 +142,7 @@ export default class SocketeerClient extends ClientAbstract {
 
   /**
    * Handles the WebSocket 'open' event.
+   *
    * This is where the client emits the '_open' and 'open' events.
    * This is also where the client's 'ready' parameter is set to true.
    * @todo protocol: timeout for before the 'hi' message
@@ -161,10 +160,10 @@ export default class SocketeerClient extends ClientAbstract {
 
   /**
    * Handles the WebSocket 'close' event.
+   *
    * This is where the client's 'ready' property is set to false,
    * and 'closed' property set to true.
    * @protected
-   * @see ClientAbstract._handleClose
    * @param  code    Close code.
    * @param  message Close message.
    * @param  error   Error, if closed due to a socket error.
@@ -180,11 +179,10 @@ export default class SocketeerClient extends ClientAbstract {
   /**
    * Emits an event or an action, depending on the
    * existence of the callback argument.
-   * Throws an error if client is not ready.
-   * @see ClientAbstract.emit
    * @param  {String}   name      Action/event name.
    * @param             data      Action/event data.
-   * @param  {Function} callback  Action callback.
+   * @param  {Function} callback  Action callback for responses.
+   * @throws Will throw an error if the client is not ready.
    */
   emit (name, data, callback) {
     this._d(`emitting ${name}`)
@@ -197,9 +195,9 @@ export default class SocketeerClient extends ClientAbstract {
    * Waits 'reconnectWait' ms before re-establishing connection,
    * unless 'immediate' is true.
    * Will not do anything if a reconnection is already scheduled.
-   * Throws an error if the connection hasn't closed yet.
    * @param  {Boolean} immediate  Whether to not wait before
    *                              re-establishing connection.
+   * @throws Will throw an error if the connection hasn't closed yet.
    */
   reconnect (immediate) {
     this._d('trying reconnect')

@@ -8,6 +8,8 @@ export default class ClientAbstract extends EventEmitter {
   /**
    * Client abstraction class for both {@link SocketeerClient} and {@link SocketeerServerClient}.
    * Not meant to be constructed directly.
+   * @extends EventEmitter
+   * @see [EventEmitter]{@link https://nodejs.org/api/events.html#events_class_events_eventemitter}
    * @return {ClientAbstract} Socketeer client abstraction.
    */
   constructor () {
@@ -18,10 +20,22 @@ export default class ClientAbstract extends EventEmitter {
     this.data = {}
   }
 
+  /**
+   * Emits an event through its EventEmitter extension.
+   * @see [EventEmitter.emit]{@link https://nodejs.org/api/events.html#events_emitter_emit_event_arg1_arg2}
+   * @param name Event name
+   * @param data Event data
+   * @protected
+   */
   _emit (name, data) {
     super.emit(name, data)
   }
 
+  /**
+   * Attaches events to the socket. Listens to WebSocket's 'message', 'error',
+   * and 'close' events.
+   * @protected
+   */
   _attachEvents () {
     this._d('[super] attaching events')
     this.ws.on('message', this._handleMessage.bind(this))
@@ -29,26 +43,40 @@ export default class ClientAbstract extends EventEmitter {
     this.ws.on('close', this._handleClose.bind(this))
   }
 
+  /**
+   * Sends JSON.stringify-ed data to socket.
+   * @see WebSocket.send
+   * @param obj Object to `JSON.stringify` and send
+   */
   send (obj) {
     let data = JSON.stringify(obj)
     this._d(`[super] sending data: ${data}`)
     this.ws.send(data)
   }
 
+  /**
+   * Event handler for WebSocket's 'error' event.
+   *
+   * This function emits a 'close' event immediately after to follow
+   * node.js's net.Socket handling of connections. The ws library does not emit
+   * a 'close' event after emitting an 'error' event.
+   * @protected
+   * @param  {Error} err Error that occured.
+   */
   _handleError (err) {
     this.d(`[super] handling error: ${maybeStack(err)}`)
     this._emit('error', err)
-    /*
-      We are emitting 'close' as well because the ws library does
-      not handle errors like net.Socket: error means that an error occured
-      and the socket is closed: there will be no 'close' event.
-
-      net.Socket's documentation states that if there is an 'error' event,
-      then the socket is pretty much dead. There is no way to recover.
-     */
     this._handleClose(null, null, err)
   }
 
+  /**
+   * Event handler for WebSocket's 'close' event, as well as the 'error' event's
+   * aftermath.
+   * @protected
+   * @param           code        Socket close code.
+   * @param           message     Socket close event.
+   * @param  {Error}  error=null  Socket error, if socket closed because of an error.
+   */
   _handleClose (code, message, error = null) {
     this._d(`[super] handling close: ` +
       `code: ${inspect(code)}, ` +
@@ -57,6 +85,17 @@ export default class ClientAbstract extends EventEmitter {
     this._emit('close', code, message, error)
   }
 
+  /**
+   * Event handler for WebSocket's 'message' event.
+   *
+   * Ignores all messages sent from the server if the socket is in a 'CLOSED'
+   * or 'CLOSING' state, although this should never happen, as the classes that
+   * extend this class should handle it.
+   * @todo Handle data other than strings
+   * @protected
+   * @param  data   WebSocket data.
+   * @param  flags  WebSocket data flags.
+   */
   _handleMessage (data, flags) {
     this._d('[super] handling message')
     if (
@@ -71,7 +110,7 @@ export default class ClientAbstract extends EventEmitter {
 
     if (typeof data !== 'string') {
       this._d('message is not string, ignoring')
-      /** @todo  handle data other than JSON */
+      // @TODO handle data other than strings
       return
     }
 
@@ -101,6 +140,13 @@ export default class ClientAbstract extends EventEmitter {
     }
   }
 
+  /**
+   * Handles actions sent from the socket.
+   * @todo Convert into a suspend function
+   * @protected
+   * @param data Data sent from the socket.
+   * @throws Will throw any error that the action handler throws, via call or callback.
+   */
   _handleAction (data) {
     this._d(`handling action ${data.a}`)
     let handler = this._actions[data.a]
@@ -112,7 +158,8 @@ export default class ClientAbstract extends EventEmitter {
         d: ActionResponse.NONEXISTENT
       })
     }
-    /** @todo clean up to use suspend */
+
+    // @TODO use suspend instead
     try {
       this._d('calling action handler')
       handler(data.d, (err, response) => {
@@ -144,6 +191,11 @@ export default class ClientAbstract extends EventEmitter {
     }
   }
 
+  /**
+   * Handles action responses sent from the socket.
+   * @protected
+   * @param data Data sent from the socket.
+   */
   _handleActionResponse (data) {
     this._d(`handling action response ${data.i}`)
     let handler = this._actionCallbacks[data.i]
@@ -169,6 +221,11 @@ export default class ClientAbstract extends EventEmitter {
     })
   }
 
+  /**
+   * Handles events sent from the socket.
+   * @protected
+   * @param data Data sent from the socket.
+   */
   _handleEvent (data) {
     this._d(`handling event ${data.e}`)
     if (!this._events[data.e]) return
