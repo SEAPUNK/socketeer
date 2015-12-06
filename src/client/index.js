@@ -8,13 +8,13 @@ export default class SocketeerClient extends ClientAbstract {
    * Create the client.
    * @see [ws.WebSocket]{@link https://github.com/websockets/ws/blob/master/doc/ws.md#new-wswebsocketaddress-protocols-options}
    * @extends ClientAbstract
-   * @param  {String} address Address to connect to.
-   * @param  {String|Array} protocols Protocols to accept.
-   * @param  {Object} options={} Options to accept.
-   * @param  {Number} options.heartbeatTimeout=15000 Time to wait in ms for 'ping' event
-   *                                                 before timing out the connection.
-   * @param  {Number} options.reconnectWait=5000 Time to wait in msbefore re-establishing
-   *                                             connection when `reconnect()` is called.
+   * @param  {String}       address                         Address to connect to.
+   * @param  {String|Array} protocols                       Protocols to accept.
+   * @param  {Object}       options={}                      Options to accept.
+   * @param  {Number}       options.heartbeatTimeout=15000  Time to wait in ms for 'ping' event
+   *                                                        before timing out the connection.
+   * @param  {Number}       options.reconnectWait=5000      Time to wait in msbefore re-establishing
+   *                                                        connection when `reconnect()` is called.
    * @return {SocketeerClient} Client.
    */
   constructor (address, protocols, options = {}) {
@@ -101,14 +101,15 @@ export default class SocketeerClient extends ClientAbstract {
     super._handleMessage(data, flags)
   }
 
+  /**
+   * Resets the heartbeat timeout.
+   * @protected
+   */
   _resetHeartbeatTimeout () {
     let timeoutPeriod = this.heartbeatInterval + this.heartbeatTimeout
     this._d(`resetting heartbeat timeout: ${timeoutPeriod}`)
 
-    if (this._heartbeatTimer) {
-      this._d('clearing existing heartbeat timer')
-      clearTimeout(this._heartbeatTimer)
-    }
+    this._stopHeartbeatTimeout()
 
     this._heartbeatTimer = setTimeout(() => {
       this._d('heartbeat timeout called')
@@ -121,9 +122,16 @@ export default class SocketeerClient extends ClientAbstract {
     }, timeoutPeriod)
   }
 
+  /**
+   * Stops the existing heartbeat timeout, if any.
+   * @protected
+   */
   _stopHeartbeatTimeout () {
-    this._d('stopping heartbeat timeout')
-    clearTimeout(this._heartbeatTimer)
+    this._d('trying to stop heartbeat timeout')
+    if (this._heartbeatTimer) {
+      this._d('stopping heartbeat timeout')
+      clearTimeout(this._heartbeatTimer)
+    }
   }
 
   /**
@@ -141,6 +149,13 @@ export default class SocketeerClient extends ClientAbstract {
     this._emit('open', this.isReconnection)
   }
 
+  /**
+   * Handles the WebSocket 'close' event.
+   * @protected
+   * @param  code    Close code.
+   * @param  message Close message.
+   * @param  error   Error, if closed due to a socket error.
+   */
   _handleClose (code, message, error) {
     this.d('handling close')
     this.ready = false
@@ -149,12 +164,29 @@ export default class SocketeerClient extends ClientAbstract {
     super._handleClose(code, message, error)
   }
 
+  /**
+   * Emits an event or an action. depending on the
+   * existence of the callback argument.
+   * Throws an error if client is not ready.
+   * @see ClientAbstract.emit
+   * @param  {String}   name      Action/event name.
+   * @param             data      Action/event data.
+   * @param  {Function} callback  Action callback.
+   */
   emit (name, data, callback) {
     this._d(`emitting ${name}`)
     if (!this.ready) throw new Error('client is not ready')
     super.emit(name, data, callback)
   }
 
+  /**
+   * Reconnects to the server.
+   * Waits 'reconnectWait' ms before re-establishing connection,
+   * 	unless 'immediate' is true.
+   * Throws an error if the connection hasn't closed yet.
+   * @param  {Boolean} immediate  Whether to not wait before
+   *                              re-establishing connection.
+   */
   reconnect (immediate) {
     this._d('trying reconnect')
     if (!this.closed) {
