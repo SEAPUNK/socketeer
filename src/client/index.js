@@ -5,7 +5,8 @@ import {inspect} from 'util'
 
 export default class SocketeerClient extends ClientAbstract {
   /**
-   * Create the client.
+   * Creates the client.
+   * Client immediately connects on intialization.
    * @see [ws.WebSocket]{@link https://github.com/websockets/ws/blob/master/doc/ws.md#new-wswebsocketaddress-protocols-options}
    * @extends ClientAbstract
    * @param  {String}       address                         Address to connect to.
@@ -13,7 +14,7 @@ export default class SocketeerClient extends ClientAbstract {
    * @param  {Object}       options={}                      Options to accept.
    * @param  {Number}       options.heartbeatTimeout=15000  Time to wait in ms for 'ping' event
    *                                                        before timing out the connection.
-   * @param  {Number}       options.reconnectWait=5000      Time to wait in msbefore re-establishing
+   * @param  {Number}       options.reconnectWait=5000      Time to wait in ms before re-establishing
    *                                                        connection when `reconnect()` is called.
    * @return {SocketeerClient} Client.
    */
@@ -37,7 +38,9 @@ export default class SocketeerClient extends ClientAbstract {
   }
 
   /**
-   * Attaches events to the socket.
+   * Attaches events to the socket. Listens to WebSocket's 'open' event, and lets
+   * ClientAbstract handle the rest.
+   * @see ClientAbstract._attachEvents
    * @protected
    */
   _attachEvents () {
@@ -47,7 +50,7 @@ export default class SocketeerClient extends ClientAbstract {
   }
 
   /**
-   * Handles heartbeats sent from the server.
+   * Handles heartbeats sent from the server by resetting the heartbeat timeout.
    * @protected
    */
   _handleHeartbeat () {
@@ -58,7 +61,10 @@ export default class SocketeerClient extends ClientAbstract {
 
   /**
    * Event handler for WebSocket's 'message' event.
-   * Handles messages sent from the server.
+   * Handles messages sent from the server; ignores all messages if socket is
+   * is in a "CLOSING" or "CLOSED" state.
+   * @todo Handling of binary data
+   * @see ClientAbstract._handleMessage
    * @protected
    * @param  data  Data.
    * @param  flags Data flags.
@@ -102,7 +108,9 @@ export default class SocketeerClient extends ClientAbstract {
   }
 
   /**
-   * Resets the heartbeat timeout.
+   * Resets the heartbeat timeout by stopping any existing timeout,
+   * and starting a new one. If the timeout function runs, the 'timeout' event
+   * is emitted from the client.
    * @protected
    */
   _resetHeartbeatTimeout () {
@@ -136,11 +144,13 @@ export default class SocketeerClient extends ClientAbstract {
 
   /**
    * Handles the WebSocket 'open' event.
-   * @protected
+   * This is where the client emits the '_open' and 'open' events.
+   * This is also where the client's 'ready' parameter is set to true.
    * @todo protocol: timeout for before the 'hi' message
    * @todo protocol: don't 'ready' until the 'hi' message is received
    * @todo protocol: if not 'ready', then ignore all server messages
    *       (except for the heartbeat interval)
+   * @protected
    */
   _handleOpen () {
     this._d('handling open')
@@ -151,7 +161,10 @@ export default class SocketeerClient extends ClientAbstract {
 
   /**
    * Handles the WebSocket 'close' event.
+   * This is where the client's 'ready' property is set to false,
+   * and 'closed' property set to true.
    * @protected
+   * @see ClientAbstract._handleClose
    * @param  code    Close code.
    * @param  message Close message.
    * @param  error   Error, if closed due to a socket error.
@@ -165,7 +178,7 @@ export default class SocketeerClient extends ClientAbstract {
   }
 
   /**
-   * Emits an event or an action. depending on the
+   * Emits an event or an action, depending on the
    * existence of the callback argument.
    * Throws an error if client is not ready.
    * @see ClientAbstract.emit
@@ -182,7 +195,8 @@ export default class SocketeerClient extends ClientAbstract {
   /**
    * Reconnects to the server.
    * Waits 'reconnectWait' ms before re-establishing connection,
-   * 	unless 'immediate' is true.
+   * unless 'immediate' is true.
+   * Will not do anything if a reconnection is already scheduled.
    * Throws an error if the connection hasn't closed yet.
    * @param  {Boolean} immediate  Whether to not wait before
    *                              re-establishing connection.
