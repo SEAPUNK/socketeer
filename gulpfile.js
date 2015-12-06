@@ -14,5 +14,5 @@ gulp.task('build', function () {
 })
 
 gulp.task('docs', shell.task([
-  'jsdoc -d doc -u tutorials -c ./.jsdocrc -r -t ./node_modules/minami ./src ./README.md'
+  'jsdoc -d doc -u tutorials -c ./.jsdocrc -r -t ./node_modules/minami ./src'
 ]))

@@ -7,7 +7,7 @@ socketeer
 
 a socket framework created as an alternative to socket.io
 
-[documentation](docs/README.md)
+[documentation](https://seapunk.github.io/socketeer)
 
 ---
 

@@ -9,3 +9,8 @@ export {default as Client} from './client'
  * @member socketeer.Server
  */
 export {default as Server} from './server'
+/**
+ * {@link ActionResponse} enum.
+ * @member socketeer.ActionResponse
+ */
+export {ActionResponse} from './common/enums'

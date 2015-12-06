@@ -5,6 +5,11 @@ import maybeStack from 'maybestack'
 import exists from 'deep-exists'
 
 export default class ClientAbstract extends EventEmitter {
+  /**
+   * Client abstraction class for both {@link SocketeerClient} and {@link SocketeerServerClient}.
+   * Not meant to be constructed directly.
+   * @return {ClientAbstract} Socketeer client abstraction.
+   */
   constructor () {
     super()
     this._events = {}
