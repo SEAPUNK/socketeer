@@ -25,7 +25,7 @@ export default class ClientAbstract extends EventEmitter {
    * @see [EventEmitter.emit]{@link https://nodejs.org/api/events.html#events_emitter_emit_event_arg1_arg2}
    * @param name Event name
    * @param data Event data
-   * @protected
+   * @private
    */
   _emit (name, data) {
     super.emit(name, data)
@@ -34,7 +34,7 @@ export default class ClientAbstract extends EventEmitter {
   /**
    * Attaches events to the socket. Listens to WebSocket's 'message', 'error',
    * and 'close' events.
-   * @protected
+   * @private
    */
   _attachEvents () {
     this._d('[super] attaching events')
@@ -60,7 +60,7 @@ export default class ClientAbstract extends EventEmitter {
    * This function emits a 'close' event immediately after to follow
    * node.js's net.Socket handling of connections. The ws library does not emit
    * a 'close' event after emitting an 'error' event.
-   * @protected
+   * @private
    * @param  {Error} err Error that occured.
    */
   _handleError (err) {
@@ -72,7 +72,7 @@ export default class ClientAbstract extends EventEmitter {
   /**
    * Event handler for WebSocket's 'close' event, as well as the 'error' event's
    * aftermath.
-   * @protected
+   * @private
    * @param           code        Socket close code.
    * @param           message     Socket close event.
    * @param  {Error}  error=null  Socket error, if socket closed because of an error.
@@ -92,7 +92,7 @@ export default class ClientAbstract extends EventEmitter {
    * or 'CLOSING' state, although this should never happen, as the classes that
    * extend this class should handle it.
    * @todo Handle data other than strings
-   * @protected
+   * @private
    * @param  data   WebSocket data.
    * @param  flags  WebSocket data flags.
    */
@@ -143,7 +143,7 @@ export default class ClientAbstract extends EventEmitter {
   /**
    * Handles actions sent from the socket.
    * @todo Convert into a suspend function
-   * @protected
+   * @private
    * @param data Data sent from the socket.
    * @throws Will throw any error that the action handler throws, via call or callback.
    */
@@ -193,7 +193,7 @@ export default class ClientAbstract extends EventEmitter {
 
   /**
    * Handles action responses sent from the socket.
-   * @protected
+   * @private
    * @param data Data sent from the socket.
    */
   _handleActionResponse (data) {
@@ -223,7 +223,7 @@ export default class ClientAbstract extends EventEmitter {
 
   /**
    * Handles events sent from the socket.
-   * @protected
+   * @private
    * @param data Data sent from the socket.
    */
   _handleEvent (data) {

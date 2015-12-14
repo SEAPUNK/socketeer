@@ -40,7 +40,7 @@ export default class SocketeerClient extends ClientAbstract {
   /**
    * Attaches events to the socket. Listens to WebSocket's 'open' event, and lets
    * ClientAbstract handle the rest.
-   * @protected
+   * @private
    */
   _attachEvents () {
     this._d('attaching events')
@@ -50,7 +50,7 @@ export default class SocketeerClient extends ClientAbstract {
 
   /**
    * Handles heartbeats sent from the server by resetting the heartbeat timeout.
-   * @protected
+   * @private
    */
   _handleHeartbeat () {
     this._d('handling heartbeat')
@@ -63,7 +63,7 @@ export default class SocketeerClient extends ClientAbstract {
    *
    * Handles messages sent from the server; ignores all messages if socket is
    * is in a "CLOSING" or "CLOSED" state.
-   * @protected
+   * @private
    * @param  data  WebSocket data.
    * @param  flags WebSocket data flags.
    */
@@ -109,7 +109,7 @@ export default class SocketeerClient extends ClientAbstract {
    * Resets the heartbeat timeout by stopping any existing timeout,
    * and starting a new one. If the timeout function runs, the 'timeout' event
    * is emitted from the client.
-   * @protected
+   * @private
    */
   _resetHeartbeatTimeout () {
     let timeoutPeriod = this.heartbeatInterval + this.heartbeatTimeout
@@ -130,7 +130,7 @@ export default class SocketeerClient extends ClientAbstract {
 
   /**
    * Stops the existing heartbeat timeout, if any.
-   * @protected
+   * @private
    */
   _stopHeartbeatTimeout () {
     this._d('trying to stop heartbeat timeout')
@@ -149,7 +149,7 @@ export default class SocketeerClient extends ClientAbstract {
    * @todo protocol: don't 'ready' until the 'hi' message is received
    * @todo protocol: if not 'ready', then ignore all server messages
    *       (except for the heartbeat interval)
-   * @protected
+   * @private
    */
   _handleOpen () {
     this._d('handling open')
@@ -163,7 +163,7 @@ export default class SocketeerClient extends ClientAbstract {
    *
    * This is where the client's 'ready' property is set to false,
    * and 'closed' property set to true.
-   * @protected
+   * @private
    * @param  code    Close code.
    * @param  message Close message.
    * @param  error   Error, if closed due to a socket error.
