@@ -11,7 +11,7 @@ export default class ServerClient extends ClientAbstract {
   }
 
   _setId (id) {
-    this._d('setting client ID to ${id}')
+    this._d(`setting client ID to ${id}`)
     if (this.id) {
       this._d('could not set ID (already set)')
       throw new Error('socket already has an ID')

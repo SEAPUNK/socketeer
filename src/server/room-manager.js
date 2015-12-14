@@ -113,7 +113,7 @@ export default class RoomManager {
    */
   _clearAll () {
     this._d('clearing the "all" room')
-    this.get('all').clear()
+    this._rooms['all'].clear()
   }
 
   /**

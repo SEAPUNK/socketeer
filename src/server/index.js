@@ -132,12 +132,14 @@ export default class SocketeerServer extends EventEmitter {
 SocketeerServer.prototype._handleConnection = suspend(function *(connection) {
   this._d('got connection, creating client')
 
+  let client = new Client(connection)
+
   let handlePrematureError = function (err) {
     this._d('connection got an error in the middle of handshake')
     this._d(maybeStack(err))
+    client._emit('premature-error', err)
   }.bind(this)
 
-  let client = new Client(connection)
   client.on('error', handlePrematureError)
   let id = this.pool._generateId()
   client._setId(id)
