@@ -131,22 +131,59 @@ export default class SocketeerServer extends EventEmitter {
  */
 SocketeerServer.prototype._handleConnection = suspend(function *(connection) {
   this._d('got connection, creating client')
+
+  let handlePrematureError = function (err) {
+    this._d('connection got an error in the middle of handshake')
+    this._d(maybeStack(err))
+  }.bind(this)
+
   let client = new Client(connection)
+  client.on('error', handlePrematureError)
   let id = this.pool._generateId()
   client._setId(id)
   this._d(`running ${this._uses.length} middleware(s) on client`)
   for (let use of this._uses) {
+    // @TODO client.isOpen()
+    if (
+      client.ws.readyState === client.ws.CLOSING ||
+      client.ws.readyState === client.ws.CLOSED
+    ) {
+      client._emit('premature-close')
+      continue
+    }
     try {
       let rejectionMessage = yield use(client, suspend.resume())
+      if (
+        client.ws.readyState === client.ws.CLOSING ||
+        client.ws.readyState === client.ws.CLOSED
+      ) {
+        client._emit('premature-close')
+        return
+      }
       if (rejectionMessage) {
         client.close(4002, rejectionMessage)
         return
       }
     } catch (err) {
+      if (
+        client.ws.readyState === client.ws.CLOSING ||
+        client.ws.readyState === client.ws.CLOSED
+      ) {
+        client._emit('premature-close')
+        return
+      }
       this._d(`failed running a middleware on client: ${maybeStack(err)}`)
       client.close(4001, 'failed executing middleware')
       return
     }
+  }
+  client.removeListener('error', handlePrematureError)
+  if (
+    client.ws.readyState === client.ws.CLOSING ||
+    client.ws.readyState === client.ws.CLOSED
+  ) {
+    client._emit('premature-close')
+    return
   }
   this.pool.add(client, id)
   this.room._joinAll(client)

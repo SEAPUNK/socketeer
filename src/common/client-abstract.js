@@ -65,7 +65,7 @@ export default class ClientAbstract extends EventEmitter {
    * @param  {Error} err Error that occured.
    */
   _handleError (err) {
-    this.d(`[super] handling error: ${maybeStack(err)}`)
+    this._d(`[super] handling error: ${maybeStack(err)}`)
     this._emit('error', err)
     this._handleClose(null, null, err)
   }

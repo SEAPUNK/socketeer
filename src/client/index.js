@@ -169,7 +169,7 @@ export default class SocketeerClient extends ClientAbstract {
    * @param  error   Error, if closed due to a socket error.
    */
   _handleClose (code, message, error) {
-    this.d('handling close')
+    this._d('handling close')
     this.ready = false
     this.closed = true
     this._stopHeartbeatTimeout()
