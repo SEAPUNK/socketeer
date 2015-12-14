@@ -18,6 +18,7 @@ export default class ClientAbstract extends EventEmitter {
     this._actions = {}
     this._actionCallbacks = {}
     this.data = {}
+    this._currentActionId = 0
   }
 
   /**
@@ -232,5 +233,116 @@ export default class ClientAbstract extends EventEmitter {
     let handlers = this._events[data.e]
     this._d(`event handlers for '${data.e}' exist, there are ${handlers.length} handlers`)
     handlers.forEach((evt) => setTimeout(() => evt(data.d)))
+  }
+
+  /**
+   * Register a handler for an event.
+   *
+   * @param {String}    name    Event name
+   * @param {Function}  handler Event handler
+   */
+  event (name, handler) {
+    this._d(`defining event handler for ${name}`)
+    if (!this._events[name]) {
+      this._events[name] = []
+    }
+    this._events[name].push(handler)
+  }
+
+  /**
+   * Register an action handler
+   * There can only be one handler registered per action.
+   *
+   * @param {String}    name    Action name
+   * @param {Function}  handler Action handler
+   * @param {Boolean}   force   Whether to override the existing action handler
+   * @throws If an action handler is already set, and `force` is `false`
+   */
+  action (name, handler, force) {
+    this._d(`defining action handler for ${name}`)
+    if (this._actions[name] && !force) {
+      this._d('action handler is already defined')
+      throw new Error('action is already defined')
+    }
+    this._actions[name] = handler
+  }
+
+  /**
+   * Emits an action or an event, depending on the existence of the callback
+   * If no callback is provided, then the client emits an event.
+   * Otherwise, the client emits an action.
+   * @param  {String}   name        Action or event name
+   * @param             data        Action or event data
+   * @param  {Function} [callback\  Callback for actions
+   */
+  emit (name, data, callback) {
+    this._d(`[super] emitting: ${name} - typeof callback: ${typeof callback}`)
+    if (typeof callback === 'function') {
+      this._emitAction(name, data, callback)
+    } else {
+      this._emitEvent(name, data)
+    }
+  }
+
+  /**
+   * Closes the connection.
+   *
+   * @see WebSocket.close
+   */
+  close () {
+    this._d('closing connection')
+    this.ws.close()
+  }
+
+  /**
+   * Closes the connection, less gracefully.
+   *
+   * @see WebSocket.terminate
+   */
+  kill () {
+    this._d('killing connection')
+    this.ws.terminate()
+  }
+
+  /**
+   * Emits an event.
+   * @param  {String} name Event name
+   * @param           data Event data
+   * @private
+   */
+  _emitEvent (name, data) {
+    this._d(`[super] emitting event: ${name}`)
+    this.send({
+      e: name,
+      d: data
+    })
+  }
+
+  /**
+   * Emits an action.
+   * @param  {String}   name     Action name
+   * @param             data     Action data
+   * @param  {Function} callback Action callback
+   * @private
+   */
+  _emitAction (name, data, callback) {
+    this._d(`[super] emitting action: ${name}`)
+    let id = this._generateActionId()
+    this._actionCallbacks[id] = callback
+    this.send({
+      i: id,
+      a: name,
+      d: data
+    })
+  }
+
+  /**
+   * Generates an action ID for the callback
+   * @return {Number} Action ID
+   * @private
+   */
+  _generateActionId () {
+    this._d(`generating action id: ${this._currentActionId}`)
+    return this._currentActionId++
   }
 }
