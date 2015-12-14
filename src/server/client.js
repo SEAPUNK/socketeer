@@ -75,7 +75,7 @@ export default class ServerClient extends ClientAbstract {
       this._handleHeartbeat()
       return
     }
-    super._handleHeartbeat(data, flags)
+    super._handleMessage(data, flags)
   }
 
   _handleClose (code, message, error) {
