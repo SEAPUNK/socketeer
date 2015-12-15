@@ -121,15 +121,73 @@ describe('SocketeerServer', function () {
     })
   })
 
-  // @TODO do other tests before this one
+  describe('.use()', function () {
+    it('should attach middleware', function (done) {
+      globalServer.use(function (client, callback) {
+        globalServer._uses = []
+        client.__OK = true
+        callback()
+      })
+      globalServer.once('connection', function (client) {
+        if (!client.__OK) {
+          return done(new Error('middleware never ran'))
+        }
+        done()
+      })
+      var client = new socketeer.Client('ws://localhost:' + port)
+      client.once('error', done)
+    })
+
+    it('should handle middleware errors correctly', function (done) {
+      globalServer.use(function (client, callback) {
+        globalServer._uses = []
+        callback(new Error('uh oh'))
+      })
+      globalServer.once('connection', function () {
+        done(new Error('got connection event; should not happen'))
+      })
+      var client = new socketeer.Client('ws://localhost:' + port)
+      client.once('error', done)
+      client.once('close', function (code, message) {
+        if (code !== 4001) {
+          return done(new Error('got unexpected code: ' + code))
+        }
+        if (message !== 'failed executing middleware') {
+          return done(new Error('got unexpected message: ' + message))
+        }
+        done()
+      })
+    })
+
+    it('should reject the connection if callbacked with a rejection message', function (done) {
+      globalServer.use(function (client, callback) {
+        globalServer._uses = []
+        callback(null, 'you shall not pass')
+      })
+      globalServer.once('connection', function () {
+        done(new Error('got connection event; should not happen'))
+      })
+      var client = new socketeer.Client('ws://localhost:' + port)
+      client.once('error', done)
+      client.once('close', function (code, message) {
+        if (code !== 4002) {
+          return done(new Error('got unexpected code: ' + code))
+        }
+        if (message !== 'you shall not pass') {
+          return done(new Error('got unexpected message: ' + message))
+        }
+        done()
+      })
+    })
+  })
 
   describe('middle-of-handshake problems', function () {
     it('should gracefully handle unprocessed middleware if client closes connection in the middle of them', function (done) {
       this.timeout(10000)
       var closeConnection
-      globalServer._uses = []
       globalServer.use(function (client, callback) {
         client.once('premature-close', function () {
+          globalServer._uses = []
           done()
         })
         client.once('close', function () {
@@ -158,6 +216,7 @@ describe('SocketeerServer', function () {
       globalServer._uses = []
       globalServer.use(function (client, callback) {
         client.once('premature-error', function (err) {
+          globalServer._uses = []
           if (err.message !== 'test') {
             done(err)
           }

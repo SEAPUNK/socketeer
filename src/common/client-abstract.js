@@ -28,8 +28,8 @@ export default class ClientAbstract extends EventEmitter {
    * @param data Event data
    * @private
    */
-  _emit (name, data) {
-    super.emit(name, data)
+  _emit (name, ...args) {
+    super.emit.apply(this, [name].concat(args))
   }
 
   /**
@@ -289,9 +289,9 @@ export default class ClientAbstract extends EventEmitter {
    *
    * @see WebSocket.close
    */
-  close () {
+  close (code, message) {
     this._d('closing connection')
-    this.ws.close()
+    this.ws.close(code, message)
   }
 
   /**

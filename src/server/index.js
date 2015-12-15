@@ -163,6 +163,7 @@ SocketeerServer.prototype._handleConnection = suspend(function *(connection) {
         return
       }
       if (rejectionMessage) {
+        this._d('rejecting connection with message: ' + rejectionMessage)
         client.close(4002, rejectionMessage)
         return
       }
