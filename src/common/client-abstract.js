@@ -3,7 +3,6 @@ import {inspect} from 'util'
 import {ActionResponse} from './enums'
 import maybeStack from 'maybestack'
 import exists from 'deep-exists'
-import {queue} from 'async'
 
 export default class ClientAbstract extends EventEmitter {
   /**
@@ -20,7 +19,6 @@ export default class ClientAbstract extends EventEmitter {
     this._actionCallbacks = {}
     this.data = {}
     this._currentActionId = 0
-    this._dataQueue = queue(this._sendNext.bind(this), 1)
   }
 
   /**
@@ -32,14 +30,6 @@ export default class ClientAbstract extends EventEmitter {
    */
   _emit (name, ...args) {
     super.emit.apply(this, [name].concat(args))
-  }
-
-  /**
-   * Sends next set of data. Workaround to {@link https://github.com/SEAPUNK/socketeer/issues/19}
-   * @todo Remove this workaround when problem is found
-   */
-  _sendNext (data, callback) {
-    this.ws.send(data, callback)
   }
 
   /**
@@ -62,8 +52,7 @@ export default class ClientAbstract extends EventEmitter {
   send (obj) {
     let data = JSON.stringify(obj)
     this._d(`[super] sending data: ${data}`)
-    this._dataQueue.push(data)
-    // this.ws.send(data)
+    this.ws.send(data)
   }
 
   /**
