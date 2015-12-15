@@ -99,7 +99,7 @@ export default class ClientAbstract extends EventEmitter {
    */
   _handleMessage (data, flags) {
     this._d('[super] handling message')
-    if (this.isOpen()) {
+    if (!this.isOpen()) {
       // The classes that extend ClientAbstract should be properly handling the
       // closed socket message, not ClientAbstract itself
       this._d('ignoring message, as socket is not open (this should never happen on super!)')
