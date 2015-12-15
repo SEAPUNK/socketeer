@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/SEAPUNK/socketeer#readme",
   "dependencies": {
-    "babel-polyfill": "^6.3.14",
+    "babel-polyfill-safe": "^1.0.1",
     "debug": "^2.2.0",
     "deep-exists": "^1.0.0",
     "maybestack": "^1.0.0",
