@@ -91,6 +91,7 @@ export default class SocketeerServer extends EventEmitter {
    * Handles the 'error' event in failless mode
    *
    * @param {Error} err Error
+   * @private
    */
   _faillessHandle (err) {
     this._d(`[failless] handling server error: ${maybeStack(err)}`)
