@@ -38,7 +38,7 @@ export default class RoomManager {
    */
   get (name, create = true) {
     this._d(`getting room ${name}, create ${create}`)
-    if (create) this.create(name)
+    if (create && name !== 'all') this.create(name)
     return this._rooms[name]
   }
 
