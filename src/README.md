@@ -7,7 +7,7 @@ socketeer
 
 a socket framework created as an alternative to socket.io
 
-`var socketeer = require('socketeer')` -> [`socketeer` namespace](socketeer.html)
+`var socketeer = require('socketeer')` -> [`socketeer` namespace](http://seapunk.github.io/socketeer/socketeer.html)
 
 - [usage](tutorial-usage.html)
 - [protocol](tutorial-protocol.html)
