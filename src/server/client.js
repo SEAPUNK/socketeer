@@ -64,11 +64,8 @@ export default class ServerClient extends ClientAbstract {
 
   _handleMessage (data, flags) {
     this._d('handling message')
-    if (
-      this.ws.readyState === this.ws.CLOSING ||
-      this.ws.readyState === this.ws.CLOSED
-    ) {
-      this._d('ignoring message, as socket is closing')
+    if (!this.isOpen()) {
+      this._d('ignoring message, as socket is not open')
       return
     }
     if (data === 'h') {

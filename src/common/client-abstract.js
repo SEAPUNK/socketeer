@@ -99,13 +99,10 @@ export default class ClientAbstract extends EventEmitter {
    */
   _handleMessage (data, flags) {
     this._d('[super] handling message')
-    if (
-      this.ws.readyState === this.ws.CLOSING ||
-      this.ws.readyState === this.ws.CLOSED
-    ) {
+    if (this.isOpen()) {
       // The classes that extend ClientAbstract should be properly handling the
       // closed socket message, not ClientAbstract itself
-      this._d('ignoring message, as socket is closing (this should never happen on super!)')
+      this._d('ignoring message, as socket is not open (this should never happen on super!)')
       return
     }
 
@@ -344,5 +341,24 @@ export default class ClientAbstract extends EventEmitter {
   _generateActionId () {
     this._d(`generating action id: ${this._currentActionId}`)
     return this._currentActionId++
+  }
+
+  /**
+   * Checks if the socket's readyState is `OPEN`
+   * @return {Boolean} Whether the socket is currently open
+   */
+  isOpen () {
+    return this.ws.readyState === this.ws.OPEN
+  }
+
+  /**
+   * Checks if the socket's readyState is `CLOSING` or `CLOSED`
+   * @return {Boolean} Whether the socket is closing or closed
+   */
+  isClosed () {
+    return (
+      this.ws.readyState === this.ws.CLOSING ||
+      this.ws.readyState === this.ws.CLOSED
+    )
   }
 }

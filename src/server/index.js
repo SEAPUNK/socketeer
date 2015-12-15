@@ -165,20 +165,13 @@ SocketeerServer.prototype._handleConnection = suspend(function *(connection) {
   client._setId(id)
   this._d(`running ${this._uses.length} middleware(s) on client`)
   for (let use of this._uses) {
-    // @TODO client.isOpen()
-    if (
-      client.ws.readyState === client.ws.CLOSING ||
-      client.ws.readyState === client.ws.CLOSED
-    ) {
+    if (!client.isOpen()) {
       client._emit('premature-close')
       continue
     }
     try {
       let rejectionMessage = yield use(client, suspend.resume())
-      if (
-        client.ws.readyState === client.ws.CLOSING ||
-        client.ws.readyState === client.ws.CLOSED
-      ) {
+      if (!client.isOpen()) {
         client._emit('premature-close')
         return
       }
@@ -188,10 +181,7 @@ SocketeerServer.prototype._handleConnection = suspend(function *(connection) {
         return
       }
     } catch (err) {
-      if (
-        client.ws.readyState === client.ws.CLOSING ||
-        client.ws.readyState === client.ws.CLOSED
-      ) {
+      if (!client.isOpen()) {
         client._emit('premature-close')
         return
       }
@@ -207,10 +197,7 @@ SocketeerServer.prototype._handleConnection = suspend(function *(connection) {
       this._d(`[failless] handling client error: ${maybeStack(err)}`)
     })
   }
-  if (
-    client.ws.readyState === client.ws.CLOSING ||
-    client.ws.readyState === client.ws.CLOSED
-  ) {
+  if (!client.isOpen()) {
     client._emit('premature-close')
     return
   }
