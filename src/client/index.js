@@ -2,6 +2,7 @@ import WebSocket from 'ws'
 import ClientAbstract from '../common/client-abstract'
 import debug from 'debug'
 import {inspect} from 'util'
+import maybeStack from 'maybestack'
 
 export default class SocketeerClient extends ClientAbstract {
   /**
@@ -16,6 +17,7 @@ export default class SocketeerClient extends ClientAbstract {
    *                                                        before timing out the connection.
    * @param  {Number}       options.reconnectWait=5000      Time to wait in ms before re-establishing
    *                                                        connection when `reconnect()` is called.
+   * @param  {Boolean}      options.failless=true           Whether Socketeer should handle unhandled 'error' events
    * @return {SocketeerClient} Client.
    */
   constructor (address, protocols, options = {}) {
@@ -29,12 +31,19 @@ export default class SocketeerClient extends ClientAbstract {
     this._d(`constructing websocket with options: ${inspect(this._constructOpts)}`)
     this.heartbeatTimeout = options.heartbeatTimeout || 15000
     this.reconnectWait = options.reconnectWait || 5000
+    this.failless = (options.failless !== false)
     this._d(`heartbeat timeout set to ${this.heartbeatTimeout}`)
     this._d(`reconnect wait set to ${this.reconnectWait}`)
     this.closed = false
     this.ready = false
     this.ws = new WebSocket(address, protocols, options)
     this._attachEvents()
+    if (this.failless) {
+      this._d('[failless] adding client error handler')
+      this.on('error', (err) => {
+        this._d(`[failless] handling client error: ${maybeStack(err)}`)
+      })
+    }
   }
 
   /**
@@ -97,7 +106,7 @@ export default class SocketeerClient extends ClientAbstract {
         return
       }
       this.heartbeatInterval = interval
-      this._d `heartbeat interval set to ${this.heartbeatInterval}`
+      this._d(`heartbeat interval set to ${this.heartbeatInterval}`)
       this._resetHeartbeatTimeout()
       return
     }

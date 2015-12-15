@@ -12,16 +12,21 @@ export default class SocketeerServer extends EventEmitter {
   /**
    * Creates the server.
    * @extends EventEmitter
-   * @param {Object} options={} Options for server.
-   * @param {Number} options.heartbeatTimeout=15000 Time to wait in ms for the 'pong'
-   *                                                event before timing out the client connection.
-   * @param {Number} options.heartbeatInterval      Interval in ms to send 'ping' events.
+   * @param {Object}  options={}                      Options for server.
+   * @param {Number}  options.heartbeatTimeout=15000  Time to wait in ms for the 'pong'
+   *                                                  event before timing out the client connection.
+   * @param {Number}  options.heartbeatInterval       Interval in ms to send 'ping' events.
+   * @param {Boolean} options.failless=true           Whether Socketeer should handle unhandled 'error' events.
+   *                                                  If you want to change the server mode to failless, set SocketeerServer#failless
+   *                                                  to either `true` or `false`, and then restart the server
+   *                                                  with SocketeerServer#stop() and SocketeerServer#start()
    * @return {SocketeerServer} Server.
    */
   constructor (options = {}) {
     super()
     this.heartbeatTimeout = options.heartbeatTimeout || 15000
     this.heartbeatInterval = options.heartbeatInterval || 10000
+    this.failless = (options.failless !== false)
     this._d = debug('socketeer:SocketeerServer')
     this._d('constructing new instance')
     this.room = new RoomManager()
@@ -75,6 +80,20 @@ export default class SocketeerServer extends EventEmitter {
     this.ws.on('error', this._handleError.bind(this))
     this.ws.on('headers', this._handleHeaders.bind(this))
     this.ws.on('connection', this._handleConnection.bind(this))
+
+    if (this.failless) {
+      this._d('[failless] adding server error handler')
+      this.on('error', this._faillessHandle)
+    }
+  }
+
+  /**
+   * Handles the 'error' event in failless mode
+   *
+   * @param {Error} err Error
+   */
+  _faillessHandle (err) {
+    this._d(`[failless] handling server error: ${maybeStack(err)}`)
   }
 
   /**
@@ -117,6 +136,7 @@ export default class SocketeerServer extends EventEmitter {
     this.room.clear()
     this.room._clearAll()
     this.ws.close()
+    this.removeListener('error', this._faillessHandle)
     this.ws = null
   }
 }
@@ -181,6 +201,12 @@ SocketeerServer.prototype._handleConnection = suspend(function *(connection) {
     }
   }
   client.removeListener('error', handlePrematureError)
+  if (this.failless) {
+    this._d('[failless] adding client error handler')
+    client.on('error', (err) => {
+      this._d(`[failless] handling client error: ${maybeStack(err)}`)
+    })
+  }
   if (
     client.ws.readyState === client.ws.CLOSING ||
     client.ws.readyState === client.ws.CLOSED
