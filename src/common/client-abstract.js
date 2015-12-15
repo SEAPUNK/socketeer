@@ -23,7 +23,7 @@ export default class ClientAbstract extends EventEmitter {
 
   /**
    * Emits an event through its EventEmitter extension.
-   * @see [EventEmitter.emit]{@link https://nodejs.org/api/events.html#events_emitter_emit_event_arg1_arg2}
+   * @see [EventEmitter#emit]{@link https://nodejs.org/api/events.html#events_emitter_emit_event_arg1_arg2}
    * @param name Event name
    * @param data Event data
    * @private
@@ -46,7 +46,7 @@ export default class ClientAbstract extends EventEmitter {
 
   /**
    * Sends JSON.stringify-ed data to socket.
-   * @see WebSocket.send
+   * @see WebSocket#send
    * @param obj Object to `JSON.stringify` and send
    */
   send (obj) {
@@ -287,7 +287,7 @@ export default class ClientAbstract extends EventEmitter {
   /**
    * Closes the connection.
    *
-   * @see WebSocket.close
+   * @see WebSocket#close
    */
   close (code, message) {
     this._d('closing connection')
@@ -297,7 +297,7 @@ export default class ClientAbstract extends EventEmitter {
   /**
    * Closes the connection, less gracefully.
    *
-   * @see WebSocket.terminate
+   * @see WebSocket#terminate
    */
   kill () {
     this._d('killing connection')

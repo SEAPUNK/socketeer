@@ -33,7 +33,7 @@ export default class RoomManager {
   /**
    * Gets a room with specified name.
    * @param  {String}  name   Room name
-   * @param  {Boolean} create Whether to create room if it doesn't exist
+   * @param  {Boolean} create=true Whether to create room if it doesn't exist
    * @return {Room} Room
    */
   get (name, create = true) {
@@ -45,7 +45,7 @@ export default class RoomManager {
   /**
    * Adds a client to a room.
    *
-   * @see  Room.add
+   * @see  Room#add
    * @param  {String} name Room name
    * @param  {SocketeerServerClient} client Server client
    * @return Whatever Room.add returns
@@ -70,7 +70,7 @@ export default class RoomManager {
 
   /**
    * Removes a client from the room.
-   * @see  Room.remove
+   * @see  Room#remove
    * @param  {String} name   Room name
    * @param  {SocketeerServerClient} client Server client
    * @return Whatever Room.remove returns

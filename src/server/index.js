@@ -81,7 +81,7 @@ export default class SocketeerServer extends EventEmitter {
    * Broadcasts an event to all connected clients
    * Alias to `this.room.rooms['all'].emit`
    *
-   * @see  Room.emit
+   * @see  Room#emit
    */
   broadcast (name, data) {
     this._d(`broadcasting: ${name}, ${data}}`)
@@ -92,7 +92,7 @@ export default class SocketeerServer extends EventEmitter {
    * Gets a room.
    * Alias to `this.room.get`
    *
-   * @see RoomManager.get
+   * @see RoomManager#get
    */
   to (name, create) {
     return this.room.get(name, create)
