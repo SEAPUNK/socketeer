@@ -35,13 +35,23 @@ export default class ClientAbstract extends EventEmitter {
   /**
    * Attaches events to the socket. Listens to WebSocket's 'message', 'error',
    * and 'close' events.
+   *
+   * We stop listening to events immediately after 'close' or 'error'
+   * (see #_handleClose()), because we don't want to
+   * emit multiple events, in case the ws library does just that. If there is an
+   * 'error', we are going to close the connection, and make ClientAbstract assume
+   * the socket is already closed. Then, after removing listeners, if this is an
+   * instance of SocketeerClient, re-add them on reconnect.
    * @private
    */
   _attachEvents () {
     this._d('[super] attaching events')
-    this.ws.on('message', this._handleMessage.bind(this))
-    this.ws.on('error', this._handleError.bind(this))
-    this.ws.on('close', this._handleClose.bind(this))
+    this._wsMessageHandler = this._handleMessage.bind(this)
+    this._wsErrorHandler = this._handleError.bind(this)
+    this._wsCloseHandler = this._handleClose.bind(this)
+    this.ws.on('message', this._wsMessageHandler)
+    this.ws.on('error', this._wsErrorHandler)
+    this.ws.on('close', this._wsCloseHandler)
   }
 
   /**
@@ -58,21 +68,26 @@ export default class ClientAbstract extends EventEmitter {
   /**
    * Event handler for WebSocket's 'error' event.
    *
-   * This function emits a 'close' event immediately after to follow
-   * node.js's net.Socket handling of connections. The ws library does not emit
-   * a 'close' event after emitting an 'error' event.
+   * This function closes the socket, and then manually
+   * emits a 'close' event immediately after to follow
+   * node.js's net.Socket handling of connections.
+   * The ws library does not always emit a 'close' event after
+   * emitting an 'error' event.
+   *
    * @private
    * @param  {Error} err Error that occured.
    */
   _handleError (err) {
     this._d(`[super] handling error: ${maybeStack(err)}`)
     this._emit('error', err)
+    this.close(1011, 'Internal Error') // Code 1011 is used for internal errors per RFC
     this._handleClose(null, null, err)
   }
 
   /**
    * Event handler for WebSocket's 'close' event, as well as the 'error' event's
    * aftermath.
+   *
    * @private
    * @param           code        Socket close code.
    * @param           message     Socket close event.
@@ -83,6 +98,9 @@ export default class ClientAbstract extends EventEmitter {
       `code: ${inspect(code)}, ` +
       `message: ${inspect(message)}, ` +
       `error: ${maybeStack(error)}`)
+    this.ws.removeListener('message', this._wsMessageHandler)
+    this.ws.removeListener('error', this._wsErrorHandler)
+    this.ws.removeListener('close', this._wsCloseHandler)
     this._emit('close', code, message, error)
   }
 

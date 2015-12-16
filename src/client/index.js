@@ -47,13 +47,13 @@ export default class SocketeerClient extends ClientAbstract {
   }
 
   /**
-   * Attaches events to the socket. Listens to WebSocket's 'open' event, and lets
-   * ClientAbstract handle the rest.
+   * Attaches events to the socket. Listens to WebSocket's 'open' event once per connection,
+   * and lets ClientAbstract handle the rest.
    * @private
    */
   _attachEvents () {
     this._d('attaching events')
-    this.ws.on('open', this._handleOpen.bind(this))
+    this.ws.once('open', this._handleOpen.bind(this))
     super._attachEvents()
   }
 
