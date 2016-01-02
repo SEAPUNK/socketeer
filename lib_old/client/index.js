@@ -1,14 +1,15 @@
-import WebSocket from 'ws'
-import ClientAbstract from '../common/client-abstract'
-import debug from 'debug'
-import {inspect} from 'util'
-import maybeStack from 'maybestack'
+'use strict'
 
-export default class SocketeerClient extends ClientAbstract {
+const WebSocket = require('ws')
+const ClientAbstract = require('../common/client-abstract')
+const debug = require('debug')
+const {inspect} = require('util')
+const maybestack = require('maybestack')
+
+class SocketeerClient extends ClientAbstract {
   /**
    * Creates the client.
    * Client immediately connects on intialization.
-   * @see [ws.WebSocket]{@link https://github.com/websockets/ws/blob/master/doc/ws.md#new-wswebsocketaddress-protocols-options}
    * @extends ClientAbstract
    * @param  {String}       address                         Address to connect to.
    * @param  {String|Array} protocols                       Protocols to accept.
@@ -18,9 +19,10 @@ export default class SocketeerClient extends ClientAbstract {
    * @param  {Number}       options.reconnectWait=5000      Time to wait in ms before re-establishing
    *                                                        connection when `reconnect()` is called.
    * @param  {Boolean}      options.failless=true           Whether Socketeer should handle unhandled 'error' events
+   * @param                 [wsopts={}]                     Options to pass to the 'ws' module's Client constructor.
    * @return {SocketeerClient} Client.
    */
-  constructor (address, protocols, options = {}) {
+  constructor (address, protocols, options = {}, wsoptions = {}) {
     super()
     this._d = debug('socketeer:SocketeerClient')
     this._constructOpts = {
@@ -41,7 +43,7 @@ export default class SocketeerClient extends ClientAbstract {
     if (this.failless) {
       this._d('[failless] adding client error handler')
       this.on('error', (err) => {
-        this._d(`[failless] handling client error: ${maybeStack(err)}`)
+        this._d(`[failless] handling client error: ${maybestack(err)}`)
       })
     }
   }
@@ -226,3 +228,5 @@ export default class SocketeerClient extends ClientAbstract {
     }, timeout)
   }
 }
+
+module.exports = SocketeerClient
