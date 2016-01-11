@@ -26,13 +26,15 @@
   },
   "homepage": "https://github.com/SEAPUNK/socketeer#readme",
   "dependencies": {
+    "async": "^1.5.2",
+    "bluebird": "^3.1.1",
     "debug": "^2.2.0",
-    "deep-exists": "^1.0.0",
-    "maybestack": "^1.0.0",
+    "deep-exists": "^1.0.1",
+    "maybestack": "^1.0.1",
     "suspend": "^0.7.0",
     "utf-8-validate": "^1.2.1",
     "uuid": "^2.0.1",
-    "ws": "^0.8.1"
+    "ws": "^1.0.1"
   },
   "devDependencies": {
     "ava": "^0.9.1",
