@@ -1,4 +1,4 @@
-Socketeer examples
+Socketeer Usage
 ===
 
 ### server

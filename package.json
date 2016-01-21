@@ -1,11 +1,10 @@
 {
   "name": "socketeer",
-  "version": "0.4.0",
-  "description": "a better way to do websockets",
+  "version": "0.6.0",
+  "description": "yet another websocket framework",
   "main": "index.js",
   "scripts": {
     "test": "standard && ava",
-    "build": "gulp",
     "prepublish": "npm run test"
   },
   "repository": {
@@ -14,10 +13,12 @@
   },
   "keywords": [
     "socket",
-    "websockets",
+    "websocket",
     "realtime",
     "io",
-    "events"
+    "events",
+    "session",
+    "resume"
   ],
   "author": "ivan k <ivan@sq10.net>",
   "license": "MIT",
@@ -38,10 +39,6 @@
   },
   "devDependencies": {
     "ava": "^0.9.1",
-    "gulp": "^3.9.0",
-    "gulp-shell": "^0.5.1",
-    "jsdoc": "^3.4.0",
-    "minami": "^1.1.1",
     "standard": "^5.4.1"
   }
 }
