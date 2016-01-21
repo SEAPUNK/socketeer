@@ -23,6 +23,8 @@ server.on('connection', (client) => {
     // socket closed, clean up
   })
 })
+
+server.listen(4000)
 ```
 
 ---

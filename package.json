@@ -25,6 +25,12 @@
   "bugs": {
     "url": "https://github.com/SEAPUNK/socketeer/issues"
   },
+  "standard": {
+    "ignore": [
+      "lib/old/",
+      "test/"
+    ]
+  },
   "homepage": "https://github.com/SEAPUNK/socketeer#readme",
   "dependencies": {
     "async": "^1.5.2",
