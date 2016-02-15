@@ -7,23 +7,6 @@ const WebSocket = require('ws')
 const Promise = require('bluebird')
 const ClientAbstract = require('./ClientAbstract')
 
-/*
-  EventEmitter reserved fields:
-  domain
-  _events
-  _eventsCount
-  _maxListeners
-  setMaxListeners
-  getMaxListneers
-  emit
-  addListener
-  on
-  once
-  removeListener
-  removeAllListeners
-  listeners
-  listenerCount
- */
 class Client extends ClientAbstract {
   constructor (address, options) {
     super()
@@ -42,8 +25,6 @@ class Client extends ClientAbstract {
     this._failless = (options.failless !== false)
     _d(`failless set to ${this._failless}`)
 
-    // Whether the client has closed at least once.
-    this._hasClosedBefore = false
     // Whether the client finished the handshake, and is ready.
     this._isReady = false
     // Whether the connection is a result of 'reconnect()' being called.
@@ -150,17 +131,82 @@ class Client extends ClientAbstract {
     const _d = this._d
     _d('handling server handshake (first server message)')
     if (typeof data !== 'string') {
-      this._handleError(new Error('server handshake data is not a string'))
-      return
+      return this._handleError(new Error('server handshake data is not a string'))
     }
 
-    ////////////////////////
-    ///
-    ///
-    ///
-    ///
-    ///
-    ///
+    const parts = data.split(':')
+    /*
+      The first part of the message should be the string: 'socketeer'.
+      This indicates that the server is in fact a socketeer server.
+     */
+    if (parts[0] !== 'socketeer') {
+      return this._handleError(new Error('handshake: server is not a socketeer server'))
+    }
+
+    /*
+      The second part of the message should be the server protocol version.
+      This is to ensure compatibility.
+
+      See the protocol docs for validation requirements.
+     */
+    if (
+      typeof parts[1] !== 'string' ||
+      parts[1].indexOf('v') !== 0
+    ) {
+      return this._handleError(new Error('handshake: version string is invalid'))
+    }
+    const serverVersion = Math.floor(+parts[1].replace(/^v/, ''))
+    if (
+      Number.isNaN(parts[1]) ||
+      parts[1] <= 0
+    ) {
+      return this._handleError(new Error('handshake: version number is invalid'))
+    }
+
+    if (serverVersion !== this.PROTOCOL_VERSION) {
+      this.ws.send(`v${this.PROTOCOL_VERSION}`, (err) => {
+        if (err) {
+          return this._handleError(new Error('handshake: failed sending protocol version to server (either way, the server protocol is incompatible with the client)'))
+        } else {
+          return this._handleError(new Error(`handshake: server protocol version is incompatible with ours. server: ${serverVersion} - client: ${this.PROTOCOL_VERSION}`))
+        }
+      })
+    }
+
+    /*
+      The third part of the message should be the heartbeat interval set message.
+      This is to make heartbeats work.
+
+      See the protocol docs for validation requirements.
+     */
+    if (
+      typeof parts[2] !== 'string' ||
+      parts[2].indexOf('i') !== 0
+    ) {
+      return this._handleError(new Error('handshake: heartbeat interval set message is invalid'))
+    }
+    const serverHeartbeatInterval = Math.floor(+parts[2].replace(/^i/, ''))
+    if (
+      Number.isNaN(parts[2]) ||
+      parts[2] < 0 ||
+      parts[2] > 2147483647
+    ) {
+      return this._handleError(new Error('handshake: heartbeat interval is an invalida number'))
+    }
+
+    this._heartbeatInterval = serverHeartbeatInterval
+    this._d(`heartbeat interval set to ${this._heartbeatInterval}`)
+
+    /*
+      Now we send our handshake message.
+     */
+    if (this._resumePromiseResolve) {
+      this._d(`sending session resume token: ${this._resumeToken}`)
+      this.ws.send(`r@${this._resumeToken}`)
+    } else {
+      this._d('querying for session resume token')
+      this.ws.send('r?')
+    }
   }
 
   resume () {
@@ -181,144 +227,155 @@ class Client extends ClientAbstract {
     })
   }
 
+  _handleHandshakeResponse (data) {
+    const _d = this._d
+    _d('handling server handshake (second server message)')
+    // Stop the handshake timeout.
+    this._stopHandshakeTimeout()
+    if (typeof data !== 'string') {
+      this._handleError(new Error('server handshake data is not a string'))
+      return
+    }
+
+    const parts = data.split(':')
+    /*
+      The first part should be either 'err' or 'ok'.
+      If err, then handle the error.
+     */
+    if (
+      parts[0] === 'ok'
+    ) {
+      // Do nothing.
+    } else if (
+      parts[0] === 'err'
+    ) {
+      return this._handleError(new Error(`handshake finalization: server encountered an error (${data})`))
+    } else {
+      return this._handleError(new Error('handshake finalization: unexpected data received'))
+    }
+
+    /*
+      The second part should be the session resume status.
+      Either way, the other functions take care of this.
+     */
+    if (this._resumePromiseResolve) {
+      this._handlePotentialSessionResume(parts)
+    } else {
+      this._handleSetSessionResume(parts)
+    }
+  }
+
+  _handlePotentialSessionResume (parts) {
+    /*
+      Check the session resume status. It must be either - or +
+     */
+    if (
+      parts[1] === '-'
+    ) {
+      this._d('session resume failed')
+      this._ready = true // so _handleClose does not emit an error
+      this.close()
+    } else if (
+      parts[1] === '+'
+    ) {
+      // This means we have also have a new session resume token.
+      const newToken = parts[2]
+      if (!this._validateSessionResumeToken(newToken)) {
+        return this._handleError(new Error('handshake finalization: session resumed, but invalid new session resume token'))
+      } else {
+        this._d(`session resumed OK with new token: ${newToken}`)
+        this._resumeToken = newToken
+        this._ready = true
+        this._resumeMessageQueue()
+        this._resolveSessionResume(true)
+      }
+    } else {
+      return this._handleError(new Error('handshake finalization: invalid session resume status'))
+    }
+  }
+
+  _handleSetSessionResume (parts) {
+    /*
+      Check the session resume status. It must be either y or n
+     */
+    if (
+      parts[1] === 'y'
+    ) {
+      // This means we also have a session resume token.
+      const newToken = parts[2]
+      if (!this._validateSessionResumeToken(newToken)) {
+        return this._handleError(new Error('handshake finalization: invalid new session resume token'))
+      } else {
+        this._d(`new resume token: ${newToken}`)
+        this._resumeToken = newToken
+        this.ready = true
+        this._clearMessageQueue()
+        this._resumeMessageQueue()
+        this._emit('open', this._isReconnection)
+      }
+    } else if (
+      parts[1] === 'n'
+    ) {
+      this._d('server does not support session resuming')
+      this._resumeToken = null
+      this.ready = true
+      this._clearMessageQueue()
+      this._resumeMessageQueue()
+      this._emit('open', this._isReconnection)
+    } else {
+      return this._handleError(new Error('handshake finalization: invalid session resume status'))
+    }
+  }
+
+  _validateSessionResumeToken (token) {
+    // Note: If the session resume token does have a : in it during the handshake,
+    // then it will cause session resuming to silently fail.
+    if (
+      typeof token !== 'string' ||
+      token.length < 5 ||
+      token.length > 200 ||
+      token.indexOf(':') !== 0
+    ) {
+      return false
+    }
+    return true
+  }
+
   _resolveSessionResume (isOkay) {
     const resolve = this._resumePromiseResolve
     delete this._resumePromiseResolve
     resolve(isOkay)
   }
-}
 
-// /////
-// /////
-// /////
-// /////
-// /////
-// /////
-
-Client.prototype._stopHandshakeTimeout = function _stopHandshakeTimeout () {
-  if (this._handshakeTimer) clearTimeout(this._handshakeTimer)
-  delete this._handshakeTimer
-}
-
-Client.prototype._beginHandshake = function _beginhandshake () {
-  this.ws.send('v' + this.PROTOCOL_VERSION)
-  this._handshakeStage = 1
-}
-
-Client.prototype._handleHeartbeatIntervalSet = function _handleHeartbeatIntervalSet (data) {
-  this._d('handling heartbeat interval set message')
-  if (typeof data !== 'string' || data.indexOf('i') !== 0) {
-    this._d('message is not heartbeat interval set message')
-    return this._handleError(new Error('handshake: expected heartbeat interval set message, but did not get it'))
+  _stopHandshakeTimeout () {
+    if (this._handshakeTimer) clearTimeout(this._handshakeTimer)
+    delete this._handshakeTimer
   }
-  var parsed = data.replace('i', '')
-  var interval = Math.floor(+parsed)
-  if (Number.isNaN(interval) || interval < 1 || interval > 2147483647) {
-    return this._handleError('invalid heartbeat interval from server')
-  }
-  this._heartbeatInterval = interval
-  this._d('heartbeat interval set to ' + this._heartbeatInterval)
-  this._handshakeSessionResume()
-}
 
-Client.prototype._handshakeSessionResume = function _handshakeSessionResume () {
-  if (this._resumeToken) {
-    this._d('sending session resume token: ' + this._resumeToken)
-    this.ws.send('r@' + this._resumeToken)
-  } else {
-    this._d('querying for session resume token')
-    this.ws.send('r?')
-  }
-  this._handshakeStage = 2
-}
-
-Client.prototype._handleSessionResume = function _handleSessionResume (data) {
-  this._d('handling session resume response')
-  if (this._resumeToken) {
-    this._handlePotentialSessionResume(data)
-  } else {
-    this._handleSetSessionResume(data)
-  }
-}
-
-Client.prototype._handlePotentialSessionResume = function _handlePotentialSessionResume (data) {
-  this._d('handling potential session resume')
-  if (typeof data === 'string' && data.indexOf('r+') === 0) {
-    var token = data.replace('r+', '')
-    if (token.length < 5 || token.length > 200) {
-      this._d('session resume token length invalid')
-      this._handleError('session resume token length invalid')
-      return
+  reconnect (immediate) {
+    if (!this.isClosed()) {
+      throw new Error('client has not disconnected to reconnect yet')
     }
-    this._d('session resume ok with new token: ' + token)
-    this._resumeToken = token
-    this._ready = true
-    this._resumeMessageQueue()
-    this._resolveSessionResume(true)
-  } else if (data === 'r-') {
-    this._d('session resume failed')
-    this._ready = true // so _handleClose doesn't emit an error
-    this.close()
-  } else {
-    this._d('invalid potential session resume data')
-    this._handleError(new Error('got invalid potential session resume data'))
+    // Prevent duplicate reconnection attempts.
+    if (!this._willReconnect) return
+    this._willReconnect = true
+    // Clear out the resume token because
+    // we are not going to resume the session.
+    delete this._resumeToken
+    const timeout = (immediate) ? 0 : this._reconnectWait
+    this._d(`will reconnect in ${timeout} ms`)
+    setTimeout(() => {
+      this._doReconnect()
+    }, timeout)
   }
-}
 
-Client.prototype._handleSetSessionResume = function _handleSessionResume (data) {
-  this._d('handling session resume token set')
-  if (data === 'r') {
-    this._d('server does not support session resuming')
-    this._resumeToken = null
-    this.ready = true
-    this._clearMessageQueue()
-    this._resumeMessageQueue()
-    this._emit('open', this._isReconnection)
-    return
-  } else if (typeof data === 'string' && data.indexOf('r:') === 0) {
-    var token = data.replace('r:', '')
-    if (token.length < 5 || token.length > 200) {
-      this._d('session resume token length invalid')
-      this._handleError(new Error('received invalid session resume token'))
-      return
-    }
-    this._d('new resume token: ' + token)
-    this._resumeToken = token
-    this.ready = true
-    this._clearMessageQueue()
-    this._resumeMessageQueue()
-    this._emit('open', this._isReconnection)
-    return
-  } else {
-    this._d('invalid session resume token data')
-    this._handleError(new Error('got invalid session resume token data'))
-    return
+  _doReconnect () {
+    this._d('reconnecting')
+    this._willReconnect = false
+    this._isReconnection = true
+    this._createWebsocket()
+    this._attachEvents()
   }
-}
-
-Client.prototype.reconnect = function reconnect (immediate) {
-  if (!this._hasClosed) {
-    this._d('has not closed, not going to reconnect')
-    throw new Error('client has not disconnected to reconnect yet')
-  }
-  if (this._willReconnect) return
-  this._d('attempting reconnect')
-  this._willReconnect = true
-  // Clear out the resume token because
-  // we are not going to resume the session.
-  delete this._resumeToken
-  var timeout = (immediate) ? 0 : this._reconnectWait
-  this._d('will reconnect in ' + timeout + 'ms')
-  setTimeout(this._doReconnect.bind(this), timeout)
-}
-
-Client.prototype._doReconnect = function _doReconnect () {
-  this._d('reconnecting')
-  this._willReconnect = false
-  this._hasClosed = false
-  this._isReconnection = true
-  this._createWebsocket()
-  this._attachEvents()
 }
 
 module.exports = Client
