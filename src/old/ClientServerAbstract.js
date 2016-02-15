@@ -72,7 +72,7 @@ class ClientAbstract extends EventEmitter {
   }
 
   _handleClose (code, message, error = null) {
-    this._d(`[super] handling close: ` +
+    this._d('[super] handling close: ' +
       `code: ${inspect(code)}, ` +
       `message: ${inspect(message)}, ` +
       `error: ${maybestack(error)}`)
@@ -193,7 +193,7 @@ class ClientAbstract extends EventEmitter {
             err = new Error(`a non-OK response was received: ${data.s}`)
         }
       }
-      this._d(`calling action response handler`)
+      this._d('calling action response handler')
       handler(err, data.d)
     })
   }

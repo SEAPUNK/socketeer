@@ -1,7 +1,7 @@
 import test from 'ava'
 import {Server, Client} from '../../'
 
-test(`server and client should correctly send and receive events`, (t) => {
+test('server and client should correctly send and receive events', (t) => {
   t.plan(4)
   return new Promise((resolve, reject) => {
     const server = new Server()
