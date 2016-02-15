@@ -27,7 +27,10 @@
     "url": "https://github.com/SEAPUNK/socketeer/issues"
   },
   "standard": {
-
+    "ignore": [
+      "lib/old/",
+      "lib/"
+    ]
   },
   "homepage": "https://github.com/SEAPUNK/socketeer#readme",
   "dependencies": {
@@ -43,16 +46,8 @@
   },
   "devDependencies": {
     "ava": "^0.11.0",
-    "standard": "^6.0.5",
-    "babel-eslint": "^5.0.0-beta8",
-    "babel-preset-es2015-node": "4.x"
-  },
-  "standard": {
-    "parser": "babel-eslint",
-    "ignore": [
-      "lib/old/",
-      "lib/"
-    ]
+    "babel-preset-es2015-node": "4.x",
+    "standard": "^6.0.5"
   },
   "engines": {
     "node": ">= 4.0.0"
