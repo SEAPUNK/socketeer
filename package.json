@@ -2,14 +2,15 @@
   "name": "socketeer",
   "version": "0.6.0",
   "description": "yet another websocket framework",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "standard && ava",
-    "prepublish": "npm run test"
+    "build": "babel -d lib src",
+    "prepublish": "npm run build && npm run test"
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/SEAPUNK/socketeer.git"
+    "url": "git+ssh://git@github.com/SEAPUNK/socketeer"
   },
   "keywords": [
     "socket",
@@ -26,10 +27,7 @@
     "url": "https://github.com/SEAPUNK/socketeer/issues"
   },
   "standard": {
-    "ignore": [
-      "lib/old/",
-      "test/"
-    ]
+
   },
   "homepage": "https://github.com/SEAPUNK/socketeer#readme",
   "dependencies": {
@@ -45,6 +43,18 @@
   },
   "devDependencies": {
     "ava": "^0.11.0",
-    "standard": "^6.0.4"
+    "standard": "^6.0.4",
+    "babel-eslint": "^5.0.0-beta8",
+    "babel-preset-es2015-node": "^4.0.0"
+  },
+  "standard": {
+    "parser": "babel-eslint",
+    "ignore": [
+      "lib/old/",
+      "lib/"
+    ]
+  },
+  "engines": {
+    "node": ">= 4.0.0"
   }
 }

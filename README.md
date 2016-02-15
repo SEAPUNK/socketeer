@@ -8,6 +8,10 @@ socketeer
 
 ---
 
+**Requires Node 4.x or newer**
+
+`npm install socketeer`
+
 yet another websocket framework
 
 - [usage](docs/usage.md)
