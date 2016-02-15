@@ -38,7 +38,7 @@ class ClientAbstract extends EventEmitter {
     this._currentActionId = 0
     this._messageQueue = new MessageQueue(this._processQueue.bind(this))
 
-    // Reserved variable for anyone to use.
+    // Reserved variable for anyone except the library to use.
     // Helps with not polluting the Socketeer instance namespace.
     this.data = {}
   }

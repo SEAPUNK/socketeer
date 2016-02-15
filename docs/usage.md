@@ -13,8 +13,8 @@ server.on('connection', (client) => {
     console.log('client said hello: ' + data)
   })
 
-  // emit an action (returns a promise if no callback is specified)
-  client.request('whoareyou', null, (name) => {
+  // emit an action (returns a promise)
+  client.request('whoareyou', null).then((name) => {
     console.log('client says they are ' + name)
   })
 
@@ -24,7 +24,9 @@ server.on('connection', (client) => {
   })
 })
 
-server.listen(4000)
+server.listen(4000).catch((err) => {
+  console.log('uh oh: ' + err)
+})
 ```
 
 ---
