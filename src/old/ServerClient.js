@@ -62,7 +62,8 @@ export default class ServerClient extends ClientAbstract {
     this._startHeartbeat()
   }
 
-  _handleMessage (data, flags) {
+  _handleMessage (messageEvent) {
+    let data = messageEvent.data
     this._d('handling message')
     if (!this.isOpen()) {
       this._d('ignoring message, as socket is not open')
@@ -72,10 +73,10 @@ export default class ServerClient extends ClientAbstract {
       this._handleHeartbeat()
       return
     }
-    super._handleMessage(data, flags)
+    super._handleMessage(messageEvent)
   }
 
-  _handleClose (code, message, error) {
+  _handleClose (closeEvent) {
     this._d('handling close')
 
     if (this._registered) {
@@ -85,6 +86,6 @@ export default class ServerClient extends ClientAbstract {
       this._pool.remove(this.id)
     }
 
-    super._handleClose(code, message, error)
+    super._handleClose(closeEvent)
   }
 }

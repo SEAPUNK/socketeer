@@ -75,7 +75,8 @@ class Client extends ClientAbstract {
     this.close()
   }
 
-  _handleMessage (data, flags) {
+  _handleMessage (messageEvent) {
+    let data = messageEvent.data
     const _d = this._d
     if (!this.isOpen()) {
       _d('message handler ignored due to closed socket')
@@ -102,7 +103,7 @@ class Client extends ClientAbstract {
         this._handleHeartbeat()
         return
       } else {
-        super._handleMessage(data, flags)
+        super._handleMessage(messageEvent)
       }
     }
   }

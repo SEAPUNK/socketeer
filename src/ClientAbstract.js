@@ -5,6 +5,7 @@ const maybestack = require('maybestack')
 const exists = require('deep-exists')
 const MessageQueue = require('./MessageQueue')
 const ActionResponse = require('./enums').ActionResponse
+const inspect = require('util').inspect
 
 const PROTOCOL_VERSION = 2
 
@@ -50,6 +51,13 @@ class ClientAbstract extends EventEmitter {
     this.ws.onclose = this._handleClose.bind(this)
   }
 
+  _detachEvents () {
+    this._d('[abstract] detaching events')
+    this.ws.onmessage = null
+    this.ws.onerror = null
+    this.ws.onclose = null
+  }
+
   emit (name, data) {
     this._d(`[abstract] emitting event: ${name}`)
     this.send({
@@ -58,17 +66,20 @@ class ClientAbstract extends EventEmitter {
     })
   }
 
-  _handleMessage (data, flags) {
+  _handleMessage (messageEvent) {
+    let data = messageEvent.data
+    // TODO: isBinary: I don't think there is any time that data is a number.
+    let isBinary = messageEvent.binary || (!(typeof data === 'string' || typeof data === 'number'))
     const _d = this._d
     _d('[abstract] handling message')
 
-    if (flags.binary) {
+    if (isBinary) {
       _d('message handler ignored due to unsupported binary data')
       return
     }
 
     if (typeof data !== 'string') {
-      _d('warning: flags.binary is false, but data is not a string!')
+      _d('warning: isBinary is false, but data is not a string!')
       return
     }
 
@@ -130,11 +141,19 @@ class ClientAbstract extends EventEmitter {
     this.close()
     this._d('[abstract] error handling: handling close')
     if (!err) err = new Error('unknown, unspecified error')
-    this._handleClose(null, null, err)
+    this._handleClose({
+      code: null,
+      reason: null,
+      error: err
+    })
   }
 
-  _handleClose (code, message, error) {
+  _handleClose (closeEvent) {
     this._d('[abstract] handling close')
+    if (!closeEvent) closeEvent = {}
+    let error = closeEvent.error
+    let code = closeEvent.code
+    let message = closeEvent.reason
     if (!error) error = null
     // This is in the case the websocket emits the 'close' event
     //  before we get the chance to call the _handleClose
@@ -144,8 +163,8 @@ class ClientAbstract extends EventEmitter {
       return
     }
     this._closeMustHaveError = false
-    this._d('close code: ' + code)
-    this._d('close message: ' + message)
+    this._d('close code: ' + inspect(code))
+    this._d('close message: ' + inspect(message))
     this._d('close error: ' + maybestack(error))
     this.ws.onmessage = null
     this.ws.onclose = null

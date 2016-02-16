@@ -6,10 +6,11 @@ const ClientAbstract = require('./ClientAbstract')
 class ServerClient extends ClientAbstract {
   constructor (ws, server) {
     super()
+    this._d = debug('socketeer:ServerClient')
     this._isReady = false
     this._handshakeOver = false
     this.ws = ws
-    this._d = debug('socketeer:ServerClient')
+    this._attachEvents()
     this.ip = ws._socket.remoteAddress
     this._d(`new ServerClient from IP address: ${this.ip}`)
     this.server = server
@@ -79,10 +80,10 @@ class ServerClient extends ClientAbstract {
     this._startHeartbeat()
   }
 
-  _handleClose (code, message, error) {
+  _handleClose (closeEvent) {
     // TODO: Mark as inactive.
     // TODO: Unregister function.
-    super._handleClose(code, message, error)
+    super._handleClose(closeEvent)
   }
 
   _handleHandshakeMessage (data) {
@@ -117,15 +118,18 @@ class ServerClient extends ClientAbstract {
   }
 
   _querySessionResume () {
+    this._d('running session resume token query')
     // TODO: ClientPool functions
   }
 
   _attemptSessionResume (token) {
+    this._d('attempting session resume')
     // TODO: ClientPool functions
     // TODO: If resuming, detach event listeners from this ServerClient instance
   }
 
-  _handleMessage (data, flags) {
+  _handleMessage (messageEvent) {
+    let data = messageEvent.data
     const _d = this._d
     if (!this.isOpen()) {
       _d('message handler ignored due to closed socket')
@@ -143,7 +147,7 @@ class ServerClient extends ClientAbstract {
       if (data === 'h') {
         this._handleHeartbeat()
       } else {
-        super._handleMessage(data, flags)
+        super._handleMessage(messageEvent)
       }
     }
   }
