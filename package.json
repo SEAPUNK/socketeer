@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "ava": "^0.11.0",
+    "babel-cli": "^6.5.1",
     "babel-preset-es2015-node4": "^2.0.3",
     "standard": "^6.0.5"
   },
