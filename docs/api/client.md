@@ -5,7 +5,7 @@ Socketeer Client
 
 **Public API**
 
-* All EventEmitter public functions, except the overriden parts
+* All of EventEmitter public API, except the overriden parts
 * All of ClientAbstract's public API, except the overriden parts
 * `constructor: constructor(address, options)`: Constructs a new instance. As soon as instance is constructed, it starts the connection.
     - `address`: valid WebSocket address to connect to
