@@ -175,8 +175,10 @@ class ClientAbstract extends EventEmitter {
       // This means we are a Client, and we attempted a session resume.
       // We _should_ have this function.
       this._resolveSessionResume(false)
-    } else {
+    } else if (!this._doNotEmitClose) {
       this._emit('close', code, message, error)
+    } else {
+      // Do nothing.
     }
   }
 

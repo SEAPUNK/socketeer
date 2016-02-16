@@ -9,6 +9,12 @@ class ServerClient extends ClientAbstract {
     this._d = debug('socketeer:ServerClient')
     this._isReady = false
     this._handshakeOver = false
+    // ClientAbstract will not emit the 'close' event with this set to true.
+    // This is because we want to decide when the 'close' event is emitted:
+    // Our custom _handleClose handler is going to emit a 'pause' event,
+    // to indicate the session no longer connected, but the session reconnect
+    // timeout will emit the real 'close' event.
+    this._doNotEmitClose = true
     this.ws = ws
     this._attachEvents()
     this.ip = ws._socket.remoteAddress
