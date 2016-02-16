@@ -52,7 +52,7 @@ Socketeer Client
 * `method: _stopHandshakeTimeout()`: Clears the handshake timeout timer.
 * `prop: _handshakeTimer`: Timer created at `_startHandshakeTimeout()` from `setTimeout()`.
 * `method: _handleMessage(messageEvent)`: Handles handshake messages, as well as heartbeat messages. Everything else is passed down to the super method.
-    - Ignores message if the connection is closed (#37)
+    - Ignores message if the connection is closed ( GH-37 )
     - If `_isReady` is `false`, it assumes that the message is a handshake message.
     - If both handshake messages have been received from the server, the connection is errored out.
     - Otherwise, if the message is `h`, the message is treated as a heartbeat.
