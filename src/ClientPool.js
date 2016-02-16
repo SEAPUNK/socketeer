@@ -8,6 +8,7 @@ class ClientPool {
     this._d = debug('socketeer:ClientPool')
     this.pool = new Map()
     this._reservedIds = new Set()
+    this._sessionPool = new Map()
   }
 
   add (client, id) {
@@ -50,6 +51,15 @@ class ClientPool {
   clear () {
     this._d('clearing pool')
     this.pool = new Map()
+  }
+
+  unreserveId (id) {
+    this._d(`unreserving id: ${id}`)
+    this._reservedIds.delete(id)
+  }
+
+  attemptResume () {
+    // TODO: Something something check if supports session resuming
   }
 }
 

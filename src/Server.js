@@ -23,6 +23,8 @@ class Server extends EventEmitter {
     _d(`heartbeat interval set to ${this._heartbeatInterval}`)
     this._failless = (options.failless !== false)
     _d(`failless set to ${this._failless}`)
+    this.supportsResuming = (options.supportsResuming !== false)
+    _d(`session resume support set to ${this.supportsResuming}`)
     this._middlewares = []
 
     if (this._failless) {
@@ -134,16 +136,32 @@ class Server extends EventEmitter {
     })
 
     this._d('awaiting handshake completion')
-    client._awaitHandshake().then((isResume) => {
-      if (isResume) return
-      if (this._middlewares.length) {
-        this._d(`running ${this._middlewares.length} middleware on client`)
-        return Promise.each(this._middlewares, (middleware, idx) => {
-          this._d(`calling middleware # ${idx + 1}`)
-          return middleware(client)
-        })
+    client._awaitHandshake().then((obj) => {
+      const isResume = obj.isResume
+      const successfulResume = obj.successfulResume
+      if (isResume) {
+        if (successfulResume) {
+          // TODO: ClientPool functions
+          // TODO: If resuming, detach event listeners from this ServerClient instance
+          // TODO: Move detach existing ws and move it to other ServerClient
+          return Promise.resolve(true)
+        } else {
+          // Client should close after receiving this message either way.
+          client.ws.send('ok:-:', () => {
+            client.close()
+          })
+        }
+        return Promise.resolve(true)
       } else {
-        return Promise.resolve()
+        if (this._middlewares.length) {
+          this._d(`running ${this._middlewares.length} middleware on client`)
+          return Promise.each(this._middlewares, (middleware, idx) => {
+            this._d(`calling middleware # ${idx + 1}`)
+            return middleware(client)
+          })
+        } else {
+          return Promise.resolve()
+        }
       }
     }).catch((err) => {
       if (!client.isOpen()) {
@@ -159,7 +177,11 @@ class Server extends EventEmitter {
         _connectionSetupErrorHandler(err)
       }
       client.close()
-    }).then(() => {
+    }).then((isSessionResume) => {
+      if (isSessionResume) {
+        // Don't do anything.
+        return
+      }
       client.removeAllListeners('error')
       if (!client.isOpen()) {
         this._d('server client closed before we could finish setup')

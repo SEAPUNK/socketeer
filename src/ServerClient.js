@@ -24,6 +24,7 @@ class ServerClient extends ClientAbstract {
       this._handshakeResolve = resolve
       this._handshakeReject = reject
     })
+    this.id = this.server.pool.generateId()
     this._beginHandshake()
   }
 
@@ -42,6 +43,11 @@ class ServerClient extends ClientAbstract {
   }
 
   _register () {
+    // Registers the client to the server.
+    // This is not called during a session resume attempt.
+    // This function is called ONLY from the server.
+
+    // TODO: generate session resume token and send to client
     // TODO: Remove handshake resolve and rejects
     // TODO: Mark as ready.
     // TODO: Heartbeat loop.
@@ -88,6 +94,9 @@ class ServerClient extends ClientAbstract {
   }
 
   _handleClose (closeEvent) {
+    if (!this._isReady) {
+      this.server.pool.unreserveId(this.id)
+    }
     // TODO: Mark as inactive.
     // TODO: Unregister function.
     super._handleClose(closeEvent)
@@ -126,13 +135,24 @@ class ServerClient extends ClientAbstract {
 
   _querySessionResume () {
     this._d('running session resume token query')
-    // TODO: ClientPool functions
+    this._handshakeResolve({
+      isResume: false
+    })
   }
 
   _attemptSessionResume (token) {
     this._d('attempting session resume')
-    // TODO: ClientPool functions
-    // TODO: If resuming, detach event listeners from this ServerClient instance
+    if (this.server.pool.attemptResume(token, this.ip)) {
+      this._handshakeResolve({
+        isResume: true,
+        successfulResume: true
+      })
+    } else {
+      this._handshakeResolve({
+        isResume: true,
+        successfulResume: false
+      })
+    }
   }
 
   _handleMessage (messageEvent) {
