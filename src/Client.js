@@ -25,10 +25,10 @@ class Client extends ClientAbstract {
     this._failless = (options.failless !== false)
     _d(`failless set to ${this._failless}`)
 
-    // Whether the client finished the handshake, and is ready.
     this._isReady = false
-    // Whether the connection is a result of 'reconnect()' being called.
     this._isReconnection = false
+    this._handshakeOver = false
+    this._awaitingHandshakeResponse = false
 
     if (this._failless) {
       _d('[failless] adding client error handler')
@@ -38,26 +38,31 @@ class Client extends ClientAbstract {
     }
 
     this._createWebsocket()
-    this._attachEvents()
   }
 
   _createWebsocket () {
     this._d('creating websocket')
     this.ws = WebSocket.apply(null, this._wsConstructArgs)
+    this._attachEvents()
   }
 
   _attachEvents () {
     this._d('attaching events')
-    this.ws.onopen = this._handleOpen.bind(this)
+    this.ws.onopen = () => this._handleOpen()
 
     super._attachEvents()
+  }
+
+  _handleClose (closeEvent) {
+    this._isReady = false
+    super._handleClose(closeEvent)
   }
 
   _handleOpen () {
     this._d('handling open')
     // Right now, we can't tell whether we can resume this session or not,
     //  but we can tell them whether it can be a session resume.
-    this._emit('_open', this._isReconnection)
+    this._emit('unreadyOpen', this._isReconnection)
     this._startHandshakeTimeout()
   }
 
@@ -75,9 +80,15 @@ class Client extends ClientAbstract {
     this._handleError('handshake timed out')
   }
 
+  _stopHandshakeTimeout () {
+    if (this._handshakeTimer) clearTimeout(this._handshakeTimer)
+    delete this._handshakeTimer
+  }
+
   _handleMessage (messageEvent) {
     let data = messageEvent.data
     const _d = this._d
+    // TODO: Issue #37
     if (!this.isOpen()) {
       _d('message handler ignored due to closed socket')
       return
@@ -93,7 +104,6 @@ class Client extends ClientAbstract {
         this._awaitingHandshakeResponse = true
         return this._handleServerHandshake(data)
       } else {
-        this._awaitingHandshakeResponse = false
         this._handshakeOver = true
         return this._handleHandshakeResponse(data)
       }
@@ -338,11 +348,6 @@ class Client extends ClientAbstract {
     resolve(isOkay)
   }
 
-  _stopHandshakeTimeout () {
-    if (this._handshakeTimer) clearTimeout(this._handshakeTimer)
-    delete this._handshakeTimer
-  }
-
   reconnect (immediate) {
     if (!this.isClosed()) {
       throw new Error('client has not disconnected to reconnect yet')
@@ -363,10 +368,10 @@ class Client extends ClientAbstract {
   _doReconnect () {
     this._d('reconnecting')
     this._handshakeOver = false
+    this._awaitingHandshakeResponse = false
     this._willReconnect = false
     this._isReconnection = true
     this._createWebsocket()
-    this._attachEvents()
   }
 }
 

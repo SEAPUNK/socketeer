@@ -142,6 +142,18 @@ class ServerClient extends ClientAbstract {
 
   _attemptSessionResume (token) {
     this._d('attempting session resume')
+    if (!this._validateSessionResumeToken(token)) {
+      return this._handleError('client sent invalid session resume token')
+    }
+    this.server.pool.prepareResume(token, this.ip).then((newToken) => {
+      
+      return this._handshakeResolve({
+        isResume: true,
+        newResumeToken: newResumeToken
+      })
+    }).catch((err) => {
+      return this._handshakeReject(err)
+    })
     const newResumeToken = this.server.pool.attemptResume(token, this.ip)
     this.server.pool.unreserveId(this.id)
     this._handshakeResolve({

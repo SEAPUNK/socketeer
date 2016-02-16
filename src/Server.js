@@ -136,7 +136,10 @@ class Server extends EventEmitter {
     })
 
     this._d('awaiting handshake completion')
-    client._awaitHandshake().then((obj) => {
+    client._awaitHandshake().catch((err) => {
+      _connectionSetupErrorHandler(err)
+      client.close()
+    }).then((obj) => {
       const isResume = obj.isResume
       const newResumeToken = obj.newResumeToken
       if (isResume) {
