@@ -84,12 +84,16 @@ class Client extends ClientAbstract {
 
     _d('handling message')
     if (!this._isReady) {
+      if (this._handshakeOver) {
+        return this._handleError('server sent unexpected handshake message, although we are done listening')
+      }
       _d('client not ready, handling handshake messages')
       if (!this._awaitingHandshakeResponse) {
         this._awaitingHandshakeResponse = true
         return this._handleServerHandshake(data)
       } else {
         this._awaitingHandshakeResponse = false
+        this._handshakeOver = true
         return this._handleHandshakeResponse(data)
       }
     } else {
@@ -371,6 +375,7 @@ class Client extends ClientAbstract {
 
   _doReconnect () {
     this._d('reconnecting')
+    this._handshakeOver = false
     this._willReconnect = false
     this._isReconnection = true
     this._createWebsocket()
