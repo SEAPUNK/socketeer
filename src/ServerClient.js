@@ -38,6 +38,7 @@ class ServerClient extends ClientAbstract {
   _register () {
     // TODO: Remove handshake resolve and rejects
     // TODO: Mark as ready.
+    // TODO: Heartbeat loop.
     this.server.pool.add(this, this.id)
     this.server.room._joinAll(this)
     this.server.emit('connection', this)
