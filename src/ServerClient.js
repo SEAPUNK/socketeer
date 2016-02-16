@@ -62,8 +62,8 @@ class ServerClient extends ClientAbstract {
       this.ws.send('h')
       this._heartbeatTimeout = setTimeout(() => {
         if (!this.isOpen()) return
-        this._emit('timeout')
-        this.close()
+        this._d('heartbeat timeout called')
+        this._handleError(new Error('heartbeat timeout'))
       }, this.server._heartbeatTimeout)
     }, this.server._heartbeatInterval)
   }
