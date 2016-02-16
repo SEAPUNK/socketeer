@@ -142,17 +142,12 @@ class ServerClient extends ClientAbstract {
 
   _attemptSessionResume (token) {
     this._d('attempting session resume')
-    if (this.server.pool.attemptResume(token, this.ip)) {
-      this._handshakeResolve({
-        isResume: true,
-        successfulResume: true
-      })
-    } else {
-      this._handshakeResolve({
-        isResume: true,
-        successfulResume: false
-      })
-    }
+    const newResumeToken = this.server.pool.attemptResume(token, this.ip)
+    this.server.pool.unreserveId(this.id)
+    this._handshakeResolve({
+      isResume: true,
+      newResumeToken: newResumeToken
+    })
   }
 
   _handleMessage (messageEvent) {

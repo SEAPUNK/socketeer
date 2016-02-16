@@ -363,6 +363,20 @@ class ClientAbstract extends EventEmitter {
       })
     })
   }
+
+  _validateSessionResumeToken (token) {
+    // Note: If the session resume token does have a : in it during the handshake,
+    // then it will cause session resuming to silently fail.
+    if (
+      typeof token !== 'string' ||
+      token.length < 5 ||
+      token.length > 200 ||
+      token.indexOf(':') !== 0
+    ) {
+      return false
+    }
+    return true
+  }
 }
 
 module.exports = ClientAbstract

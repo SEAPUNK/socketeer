@@ -138,9 +138,9 @@ class Server extends EventEmitter {
     this._d('awaiting handshake completion')
     client._awaitHandshake().then((obj) => {
       const isResume = obj.isResume
-      const successfulResume = obj.successfulResume
+      const newResumeToken = obj.newResumeToken
       if (isResume) {
-        if (successfulResume) {
+        if (newResumeToken) {
           // TODO: ClientPool functions
           // TODO: If resuming, detach event listeners from this ServerClient instance
           // TODO: Move detach existing ws and move it to other ServerClient
