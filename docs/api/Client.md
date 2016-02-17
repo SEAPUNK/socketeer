@@ -1,4 +1,4 @@
-Socketeer Client
+API: Client
 ===
 
 *extends ClientAbstract (which extends EventEmitter)*
@@ -35,6 +35,7 @@ Socketeer Client
         + An error occured while attempting to resume the session.
         + The server rejected the session resume token.
 * `method: reconnect(immediate)`: Attempts to reconnect the server with a new session.
+    - This clears the message queue, discarding any pending messages.
     - Does not return anything. Any events are managed through EventEmitter.
     - Throws an error if the client connection has not yet closed.
     - Reconnects only one per client disconnection.
@@ -110,3 +111,4 @@ Socketeer Client
 * `prop: _heartbeatTimer`: Timer created at `_resetHeartbeatTimeout()`, from `setTimeout()`.
 * `method: _stopHeartbeatTimeout`: Clears the heartbeat timeout timer, if any.
 * `method: _doReconnect()`: Re-establishes the connection to the server, by resetting some variables, and connecting to the server again.
+* `method: _detachEvents()`: Detaches from the existing websocket's `onopen` event. Wraps ClientAbstract's method.

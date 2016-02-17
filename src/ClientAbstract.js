@@ -46,16 +46,24 @@ class ClientAbstract extends EventEmitter {
 
   _attachEvents () {
     this._d('[abstract] attaching events')
-    this.ws.onmessage = this._handleMessage.bind(this)
-    this.ws.onerror = this._handleError.bind(this)
-    this.ws.onclose = this._handleClose.bind(this)
+    this.ws.onmessage = (messageEvent) => this._handleMessage(messageEvent)
+    this.ws.onerror = (err) => this._handleError(err)
+    this.ws.onclose = (closeEvent) => this._handleClose(closeEvent)
   }
 
   _detachEvents () {
     this._d('[abstract] detaching events')
-    this.ws.onmessage = null
-    this.ws.onerror = null
-    this.ws.onclose = null
+    this.ws.onmessage = () => {
+      this._d('[abstract] warning: a detached websocket emitted the "message" event')
+    }
+    this.ws.onclose = () => {
+      this._d('[abstract] warning: a detached websocket emitted the "close" event')
+    }
+    // We want to handle any errors the websocket
+    // might emit to prevent unneeded unhandled exceptions.
+    this.ws.onerror = (err) => {
+      this._d(`[abstract] handling error of closed connection: ${maybestack(err)}`)
+    }
   }
 
   emit (name, data) {
@@ -166,11 +174,7 @@ class ClientAbstract extends EventEmitter {
     this._d('close code: ' + inspect(code))
     this._d('close message: ' + inspect(message))
     this._d('close error: ' + maybestack(error))
-    this.ws.onmessage = null
-    this.ws.onclose = null
-    // We want to handle any errors the websocket
-    // might emit to prevent unneeded unhandled exceptions.
-    this.ws.onerror = this._dummyErrorHandler.bind(this)
+    this._detachEvents()
     if (this._resumePromiseResolve) {
       // This means we are a Client, and we attempted a session resume.
       // We _should_ have this function.
@@ -180,10 +184,6 @@ class ClientAbstract extends EventEmitter {
     } else {
       // Do nothing.
     }
-  }
-
-  _dummyErrorHandler (err) {
-    this._d(`[abstract] handling error of closed connection: ${maybestack(err)}`)
   }
 
   _processQueue (msg, done) {
@@ -279,10 +279,13 @@ class ClientAbstract extends EventEmitter {
 
   _handleActionResponse (data) {
     this._d(`[abstract] handling action response: ${data.i}`)
+    // TODO: Action response handler cleanup after usage
     const handler = this._actionPromises.get(data.i)
     // TODO: Should we throw an error if the connection
     //  sends an action response for a nonexistent handler?
     //  It can indicate that the connection is malfunctioning.
+    //
+    //  ...it could also be part of the action timeouts.
     if (!handler) return
     this._d('action response handler exists, continuing')
     this._d(`determining error from status: ${data.s}`)
@@ -349,6 +352,7 @@ class ClientAbstract extends EventEmitter {
     return this._currentActionId++
   }
 
+  // TODO: Action timeouts
   request (name, data) {
     return new Promise((resolve, reject) => {
       const id = this._generateActionId()

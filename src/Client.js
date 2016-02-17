@@ -55,6 +55,15 @@ class Client extends ClientAbstract {
     super._attachEvents()
   }
 
+  _detachEvents () {
+    this._d('detaching events')
+    this.ws.onopen = () => {
+      this._d('warning: a detached websocket emitted the "open" event')
+    }
+
+    super._detachEvents()
+  }
+
   _handleClose (closeEvent) {
     this._isReady = false
     super._handleClose(closeEvent)
