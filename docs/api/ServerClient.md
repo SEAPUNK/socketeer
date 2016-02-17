@@ -17,6 +17,7 @@ API: ServerClient
 * `event: close()`: Client has been disconnected from the server, and can no longer resume the session. Overrides ClientAbstract's `close` event.
     - This event is also emitted if the server does not support session resuming.
 * `event: resume(newIP, oldIP)`: Client has resumed its session.
+* `prop: server`: Server instance that manages this ServerClient.
 * `prop: ws`: `ws.WebSocket` instance
 * `prop: ip`: WebSocket IP
 * `prop: id`: UUID used to identify the client.
