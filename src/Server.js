@@ -23,8 +23,10 @@ class Server extends EventEmitter {
     _d(`heartbeat interval set to ${this._heartbeatInterval}`)
     this._failless = (options.failless !== false)
     _d(`failless set to ${this._failless}`)
-    this.supportsResuming = (options.supportsResuming !== false)
+    this.supportsResuming = !!options.supportsResuming
     _d(`session resume support set to ${this.supportsResuming}`)
+    this._sessionTimeout = options.sessionTimeout || 10000
+    _d(`session resume timeout set to ${this._sessionTimeout}`)
     this._middlewares = []
 
     if (this._failless) {

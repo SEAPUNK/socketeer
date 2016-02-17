@@ -130,36 +130,6 @@ class ServerClient extends ClientAbstract {
     })
   }
 
-  _replaceSocket (ws) {
-    this._d(`hot-swapping websockets for ServerClient id ${ws}`)
-    // TODO: Detach current ws's events.
-    this.ws = ws
-    this.ip = ws._socket.remoteAddress
-    this._d(`hot-swapped websocket's IP address: ${this.ip}`)
-    // TODO: Attach this websocket's events.
-    // TODO: Resume the message feed.
-  }
-
-  _register () {
-    // Registers the client to the server.
-    // This is not called during a session resume attempt.
-    // This function is called ONLY from the server.
-
-    // TODO: generate session resume token and send to client
-    // TODO: Remove handshake resolve and rejects
-    // TODO: Mark as ready.
-    // TODO: Heartbeat loop.
-    this.server.pool.add(this, this.id)
-    this.server.room._joinAll(this)
-    this.server.emit('connection', this)
-  }
-
-  _awaitHandshake () {
-    return this._handshakePromise
-  }
-
-
-
   _startHeartbeat () {
     this._d('starting heartbeat loop')
     this._heartbeatLoop = setTimeout(() => {
@@ -185,19 +155,50 @@ class ServerClient extends ClientAbstract {
     this._startHeartbeat()
   }
 
+  // Incomplete functions below
+  // //////////////////////////
+  _replaceSocket (ws) {
+    this._d(`hot-swapping websockets for ServerClient id ${this.id} @ ip ${this.ip}`)
+    // TODO: Detach current ws's events.
+    this.ws = ws
+    this.ip = ws._socket.remoteAddress
+    this._d(`hot-swapped websocket's IP address: ${this.ip}`)
+    // TODO: Attach this websocket's events.
+    // TODO: Resume the message feed.
+  }
+
+  _register (newToken) {
+    // Registers the client to the server.
+    // This is not called during a session resume attempt.
+    // This function is called ONLY from the server.
+
+    // TODO: Remove handshake resolve and rejects
+    // TODO: Mark as ready.
+    // TODO: Heartbeat loop.
+    this.server.pool.add(this, this.id)
+    this.server.room._joinAll(this)
+    this.server.emit('connection', this)
+  }
+
   _handleClose (closeEvent) {
-    if (!this._isReady) {
-      this.server.pool.unreserveId(this.id)
+    if (!this._handshakeFinished) {
+      // TODO: Absolutely destroy the connection.
     }
+
+    if (!this._isReady) {
+      return this.server.pool.unreserveId(this.id)
+    }
+
     // TODO: Mark as inactive.
+    // TODO: Start the session timeout
     // TODO: Unregister function.
     super._handleClose(closeEvent)
   }
 
-
-
-
-
+  _destroySession () {
+    // TODO: Mark as closed
+    // TODO: Clean up
+  }
 }
 
 module.exports = ServerClient

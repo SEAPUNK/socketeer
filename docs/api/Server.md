@@ -15,7 +15,9 @@ API: Server
         + `failless`: Whether Socketeer should handle unhandled `error` events
             * default: `true`
         + `supportsResuming`: Whether the server supports session resuming
-            * default: `true`
+            * default: `false`
+        + `sessionTimeout`: How long to wait in ms before destroying a paused session
+            * default: `10000`
 * `prop: supportsResuming`: **Read-only** boolean indicating whether the server supports session resuming or not.
 * `prop: room`: RoomManager instance.
 * `prop: pool`: ClientPool instance.
@@ -54,6 +56,7 @@ API: Server
 * `prop: _d`: `debug` module instance.
 * `prop: _heartbeatTimeout`: Configured heartbeat timeout
 * `prop: _heartbeatInterval`: Configured heartbeat interval
+* `prop: _sessionTimeout`: Configured session resume timeout
 * `prop: _middlewares`: List of middleware to run on a client.
 * `prop: _failless`: Whether the server should handle all unhandled Server and ServerClient errors
 * `method: _handleError(err)`: Handles errors. Emits `error` event.
