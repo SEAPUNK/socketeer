@@ -22,7 +22,7 @@ class ClientPool {
     this._d(`adding client to pool: ${id}`)
     if (this.pool.get(id)) throw new Error(`id ${id} is already in the pool`)
     this.unreserveId(id)
-    this.pool.add(id, client)
+    this.pool.set(id, client)
     return id
   }
 

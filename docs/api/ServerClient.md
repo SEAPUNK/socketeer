@@ -12,10 +12,12 @@ API: ServerClient
     - `server`: Server responsible for constructing this server client
 * `method: join(name)`: Adds the client to a server room. Alias to `server.room.join(name, this)`
 * `method: leave(name)`: Removes the client from a server room. Alias to `server.room.leave(name, this)`
-* `event: pause()`: The client has been disconnected from the server, and the session has been paused.
+* `event: pause(code, message, error)`: The client has been disconnected from the server, and the session has been paused.
     - If the server does not support session resuming, this event is never called.
-* `event: close()`: Client has been disconnected from the server, and can no longer resume the session. Overrides ClientAbstract's `close` event.
+    - Code, message, and error are the same as what ClientAbstract would have emitted on the `close` event.
+* `event: close(code, message, error)`: Client has been disconnected from the server, and can no longer resume the session. Overrides ClientAbstract's `close` event.
     - This event is also emitted if the server does not support session resuming.
+    - If the server does not support session resuming, then close will include the code, message, and error with the event.
 * `event: resume(newIP, oldIP)`: Client has resumed its session.
 * `prop: server`: Server instance that manages this ServerClient.
 * `prop: ws`: `ws.WebSocket` instance

@@ -307,7 +307,7 @@ class Client extends ClientAbstract {
 
   _finalizeHandshake (isSessionResume) {
     if (!isSessionResume) this._clearMessageQueue()
-    this._ready = true
+    this._isReady = true
     this._resumeMessageQueue()
     if (!isSessionResume) this._emit('open', this._isReconnection)
     if (isSessionResume) this._resolveSessionResume(true)
@@ -380,6 +380,7 @@ class Client extends ClientAbstract {
 
   _doReconnect () {
     this._d('reconnecting')
+    this._socketeerClosing = false
     this._handshakeOver = false
     this._awaitingHandshakeResponse = false
     this._willReconnect = false

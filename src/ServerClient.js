@@ -10,14 +10,18 @@ class ServerClient extends ClientAbstract {
 
     this._isReady = false
     this._handshakeOver = false
+    this._handshakeFinished = false
+    this._sessionToken = null
 
     // ClientAbstract will not emit the 'close' event with this set to true.
     // This is because we want to decide when the 'close' event is emitted:
     // Our custom _handleClose handler is going to emit a 'pause' event,
     // to indicate the session no longer connected, but the session reconnect
     // timeout will emit the real 'close' event.
-    this._doNotEmitClose = true
+    // TODO: Change this to closeIsPause
+    this._doNotEmitClose = this.server.supportsResuming
 
+    this.id = this.server.pool.generateId()
     this.server = server
     this.ws = ws
     this.ip = ws._socket.remoteAddress
@@ -26,8 +30,6 @@ class ServerClient extends ClientAbstract {
       this._handshakeResolve = resolve
       this._handshakeReject = reject
     })
-    this._handshakeFinished = false
-    this.id = this.server.pool.generateId()
     this._attachEvents()
     this._beginHandshake()
   }
@@ -155,49 +157,64 @@ class ServerClient extends ClientAbstract {
     this._startHeartbeat()
   }
 
-  // Incomplete functions below
-  // //////////////////////////
-  _replaceSocket (ws) {
-    this._d(`hot-swapping websockets for ServerClient id ${this.id} @ ip ${this.ip}`)
-    // TODO: Detach current ws's events.
-    this.ws = ws
-    this.ip = ws._socket.remoteAddress
-    this._d(`hot-swapped websocket's IP address: ${this.ip}`)
-    // TODO: Attach this websocket's events.
-    // TODO: Resume the message feed.
-  }
-
   _register (newToken) {
     // Registers the client to the server.
     // This is not called during a session resume attempt.
     // This function is called ONLY from the server.
 
-    // TODO: Remove handshake resolve and rejects
-    // TODO: Mark as ready.
-    // TODO: Heartbeat loop.
+    this._isReady = true
+    this._startHeartbeat()
+    this._sessionToken = newToken
+    this.server.pool.createSession(newToken, this, this.ip)
     this.server.pool.add(this, this.id)
     this.server.room._joinAll(this)
     this.server.emit('connection', this)
   }
 
+  _destroySession () {
+    this.server.room.removeAll(this)
+    this.server.room._leaveAll(this)
+    this.pool.remove(this.id)
+    this._emit('close')
+  }
+
   _handleClose (closeEvent) {
     if (!this._handshakeFinished) {
-      // TODO: Absolutely destroy the connection.
+      this.server.pool.unreserveId(this.id)
+      this._handshakeReject(closeEvent.error || new Error('client closed prematurely'))
+      return super._handleClose(closeEvent)
     }
 
     if (!this._isReady) {
-      return this.server.pool.unreserveId(this.id)
+      this.server.pool.unreserveId(this.id)
+      return super._handleClose(closeEvent)
     }
 
-    // TODO: Mark as inactive.
-    // TODO: Start the session timeout
-    // TODO: Unregister function.
+    this._stopHeartbeat()
+    if (this.server.supportsResuming) {
+      this.server.pool.deactivateSession(this._sessionToken)
+    } else {
+      this.server.room.removeAll(this)
+      this.server.room._leaveAll(this)
+      this.pool.remove(this.id)
+    }
+
+    // TODO: Change this to closeIsPause
     super._handleClose(closeEvent)
+
+    if (this.server.supportsResuming) {
+      return this._emit('pause', closeEvent.code, closeEvent.reason, closeEvent.error || null)
+    }
   }
 
-  _destroySession () {
-    // TODO: Mark as closed
-    // TODO: Clean up
+  _replaceSocket (ws) {
+    this._d(`hot-swapping websockets for ServerClient id ${this.id} @ ip ${this.ip}`)
+    this._socketeerClosing = false
+    this.ws = ws
+    this.ip = ws._socket.remoteAddress
+    this._d(`hot-swapped websocket's IP address: ${this.ip}`)
+    this._attachEvents()
+    this._resumeMessageQueue()
   }
 }
 
