@@ -101,12 +101,34 @@ class ServerClient extends ClientAbstract {
 
   _querySessionResume () {
     this._d('running session resume token query')
-    this._handshakeResolve({
-      isResume: false
+    this.server.pool.reserveNewToken().then((token) => {
+      if (!this.isOpen()) return
+      this._handshakeFinished = true
+      this._handshakeResolve({
+        isResume: false,
+        newResumeToken: token
+      })
+    }).catch((err) => {
+      this._handleError(err)
     })
   }
 
-
+  _attemptSessionResume (token) {
+    this._d('attempting session resume')
+    if (!this._validateSessionResumeToken(token)) {
+      return this._handleError('client sent invalid session resume token')
+    }
+    this.server.pool.attemptResume(token, this.ip).then((newToken) => {
+      if (!this.isOpen()) return
+      this._handshakeFinished = true
+      this._handshakeResolve({
+        isResume: true,
+        newResumeToken: newToken
+      })
+    }).catch((err) => {
+      this._handleError(err)
+    })
+  }
 
   _replaceSocket (ws) {
     this._d(`hot-swapping websockets for ServerClient id ${ws}`)
@@ -175,27 +197,7 @@ class ServerClient extends ClientAbstract {
 
 
 
-  _attemptSessionResume (token) {
-    this._d('attempting session resume')
-    if (!this._validateSessionResumeToken(token)) {
-      return this._handleError('client sent invalid session resume token')
-    }
-    this.server.pool.prepareResume(token, this.ip).then((newToken) => {
-      
-      return this._handshakeResolve({
-        isResume: true,
-        newResumeToken: newResumeToken
-      })
-    }).catch((err) => {
-      return this._handshakeReject(err)
-    })
-    const newResumeToken = this.server.pool.attemptResume(token, this.ip)
-    this.server.pool.unreserveId(this.id)
-    this._handshakeResolve({
-      isResume: true,
-      newResumeToken: newResumeToken
-    })
-  }
+
 }
 
 module.exports = ServerClient

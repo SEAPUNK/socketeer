@@ -4,8 +4,9 @@ const debug = require('debug')
 const Room = require('./Room')
 
 class RoomManager {
-  constructor () {
+  constructor (server) {
     this._d = debug('socketeer:RoomManager')
+    this.server = server
     this.rooms = new Map()
     this.rooms.set('all', new Room('all'))
   }
