@@ -121,84 +121,92 @@ class Server extends EventEmitter {
     const client = new ServerClient(connection, this)
 
     let calledSetupErrorHandler = false
-    const _connectionSetupErrorHandler = (err) => {
-      if (calledSetupErrorHandler) return
-      this._d(`connection setup error handler: ${maybestack(err)}`)
+    const setupErrorHandler = (err) => {
+      if (calledSetupErrorHandler) {
+        this._d(`warning: called setupErrorHandler more than twice: ${maybestack(err)}`)
+        return
+      }
       calledSetupErrorHandler = true
+      client.removeAllListeners('error')
+      client.on('error', (err) => {
+        this._d(`error handler called on defunct connection: ${maybestack(err)}`)
+      })
       this.emit('connectionSetupError', err)
     }
 
-    client.on('error', (err) => {
-      this._d(`client errored during setup: ${maybestack(err)}`)
-      _connectionSetupErrorHandler(err)
-    })
+    const handleSessionResume = (newResumeToken) => {
+      if (!newResumeToken) {
+        // Session resume failed.
+        client.ws.send('ok:-:', () => {
+          client.close()
+        })
+      } else {
+        // Session resume succeeded.
+        // TODO: Finish the setup
+      }
+    }
 
-    this._d('awaiting handshake completion')
-    client._awaitHandshake().catch((err) => {
-      _connectionSetupErrorHandler(err)
-      client.close()
-    }).then((obj) => {
-      const isResume = obj.isResume
-      const newResumeToken = obj.newResumeToken
-      if (isResume) {
-        if (newResumeToken) {
-          // TODO: ClientPool functions
-          // TODO: If resuming, detach event listeners from this ServerClient instance
-          // TODO: Move detach existing ws and move it to other ServerClient
-          return Promise.resolve(true)
-        } else {
-          // Client should close after receiving this message either way.
-          client.ws.send('ok:-:', () => {
-            client.close()
+    const setupConnection = (newResumeToken) => {
+      try {
+        client.removeAllListeners('error')
+        if (!client.isOpen()) {
+          this._d('server client closed before we could finish setup')
+          return setupErrorHandler(new Error('client closed before setup finish'))
+        }
+        if (this._failless) {
+          this._d('[failless] adding server client error handler')
+          client.on('error', (err) => {
+            this._d(`[failless] handling server client error: ${maybestack(err)}`)
           })
         }
-        return Promise.resolve(true)
-      } else {
+        client._register(newResumeToken)
+      } catch (err) {
+        this._d(`connection creation errored: ${maybestack(err)}`)
+        client.close()
+        return setupErrorHandler(err)
+      }
+    }
+
+    const handleNewSession = (newResumeToken) => {
+      (Promise.resolve().then(() => {
         if (this._middlewares.length) {
           this._d(`running ${this._middlewares.length} middleware on client`)
           return Promise.each(this._middlewares, (middleware, idx) => {
-            this._d(`calling middleware # ${idx + 1}`)
+            this._d(`calling middleware #${idx + 1}`)
             return middleware(client)
           })
         } else {
           return Promise.resolve()
         }
-      }
-    }).catch((err) => {
-      if (!client.isOpen()) {
-        this._d('server client closed before we could finish setup')
-        _connectionSetupErrorHandler(new Error('client closed before setup finish'))
-        return
-      }
-      if (!err) {
-        this._d('a middleware rejected the connection')
-        client.ws.send('err:A server middleware rejected your connection.')
+      }).then(() => {
+        setupConnection(newResumeToken)
+      }).catch((err) => {
+        if (!client.isOpen()) {
+          this._d('server client closed before we could finish setup')
+          return setupErrorHandler(new Error('client closed before setup finish'))
+        }
+        if (!err) {
+          this._d('a middleware rejected the connection')
+          client.ws.send('err:A server middleware rejected your connection.')
+        } else {
+          this._d(`an error occured while processing middleware: ${maybestack(err)}`)
+          setupErrorHandler(err)
+        }
+        client.close()
+      }))
+    }
+
+    client._handshakePromise.then((obj) => {
+      const isResume = obj.isResume
+      const newResumeToken = obj.newResumeToken
+      if (isResume) {
+        handleSessionResume.bind(newResumeToken)
       } else {
-        this._d(`an error occured while processing middleware: ${maybestack(err)}`)
-        _connectionSetupErrorHandler(err)
+        handleNewSession.bind(newResumeToken)
       }
-      client.close()
-    }).then((isSessionResume) => {
-      if (isSessionResume) {
-        // Don't do anything.
-        return
-      }
-      client.removeAllListeners('error')
-      if (!client.isOpen()) {
-        this._d('server client closed before we could finish setup')
-        _connectionSetupErrorHandler(new Error('client closed before setup finish'))
-        return
-      }
-      if (this._failless) {
-        this._d('[failless] adding server client error handler')
-        client.on('error', (err) => {
-          this._d(`[failless] handling server client error: ${maybestack(err)}`)
-        })
-      }
-      client._register()
     }).catch((err) => {
-      this._d(`connection creation errored: ${maybestack(err)}`)
-      _connectionSetupErrorHandler(err)
+      // Handshake failed, and the client has closed and cleaned up.
+      setupErrorHandler(err)
     })
   }
 }
