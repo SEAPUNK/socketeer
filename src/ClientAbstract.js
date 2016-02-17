@@ -39,7 +39,9 @@ class ClientAbstract extends EventEmitter {
     this._actions = new Map()
     this._actionPromises = new Map()
     this._currentActionId = 0
-    this._messageQueue = new MessageQueue((data, done) => this._processQueue(data, done))
+    this._messageQueue = new MessageQueue((msg, done) => this._processQueue(msg, done))
+
+    this._doNotEmitClose = false
 
     // Reserved variable for anyone except the library to use.
     // Helps with not polluting the Socketeer instance namespace.
@@ -146,6 +148,11 @@ class ClientAbstract extends EventEmitter {
 
   _handleError (err) {
     this._da(`handling error: ${maybestack(err)}`)
+    // Assure that _handleClose or _handleError emits an event only once.
+    if (this._socketeerClosing) {
+      this._da('socketeer is closing, ignoring _handleError')
+      return
+    }
     if (!this._resumePromiseResolve) {
       // This means we are a Client, and we attempted a session resume.
       this._emit('error', err, true)
@@ -163,6 +170,11 @@ class ClientAbstract extends EventEmitter {
 
   _handleClose (closeEvent) {
     this._da('handling close')
+    // Assure that _handleClose or _handleError emits an event only once.
+    if (this._socketeerClosing) {
+      this._da('socketeer is closing, ignoring _handleClose')
+      return
+    }
     if (!closeEvent) closeEvent = {}
     let error = closeEvent.error
     let code = closeEvent.code
@@ -175,6 +187,7 @@ class ClientAbstract extends EventEmitter {
       this._da('ignoring close message because it does not have error, but it was specified that it should')
       return
     }
+    this._socketeerClosing = true
     this._closeMustHaveError = false
     this._da('close code: ' + inspect(code))
     this._da('close message: ' + inspect(message))
@@ -286,11 +299,13 @@ class ClientAbstract extends EventEmitter {
     this._da(`handling action response: ${data.i}`)
     // TODO: Action response handler cleanup after usage
     const handler = this._actionPromises.get(data.i)
-    // TODO: Should we throw an error if the connection
-    //  sends an action response for a nonexistent handler?
-    //  It can indicate that the connection is malfunctioning.
-    //
-    //  ...it could also be part of the action timeouts.
+    // We are not throwing an error if the connection sends an
+    // action response for a nonexistent handler because the action
+    // response handler map is cleaned up on a regular basis, same with
+    // the action timing out.
+    // It could indicate that the client or server is faulty, but
+    // it'll have to be something the client or server code writer
+    // needs to figure out.
     if (!handler) return
     this._da('action response handler exists, continuing')
     this._da(`determining error from status: ${data.s}`)
@@ -307,10 +322,14 @@ class ClientAbstract extends EventEmitter {
         err = new Error(`an unknown non-OK response was received: ${data.s}`)
     }
     this._da('calling action response handler')
-    if (!err) {
-      handler.resolve(data.d)
-    } else {
-      handler.reject(err)
+    try {
+      if (!err) {
+        handler.resolve(data.d)
+      } else {
+        handler.reject(err)
+      }
+    } catch (err) {
+      this._emit('error', new Error('could not resolve or reject the action response handler: ' + err))
     }
   }
 

@@ -111,4 +111,5 @@ API: Client
 * `prop: _heartbeatTimer`: Timer created at `_resetHeartbeatTimeout()`, from `setTimeout()`.
 * `method: _stopHeartbeatTimeout`: Clears the heartbeat timeout timer, if any.
 * `method: _doReconnect()`: Re-establishes the connection to the server, by resetting some variables, and connecting to the server again.
+    - Also resets the `_socketeerClosing` variable to `false`.
 * `method: _detachEvents()`: Detaches from the existing websocket's `onopen` event. Wraps ClientAbstract's method.

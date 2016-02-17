@@ -52,11 +52,11 @@ This is the class that is extended by both Client and ServerClient.
 * `method: isClosed()`: Whether the socket's readyState is `CLOSED`
 * `event: error(err, connectionError)`: Whenever an error occurs.
     - If the error is an error related to the WebSocket connection, then `connectionError` will be true.
-    - If `connectionError` is true, then the `close` event will be called immediately afterwards.
+    - If `connectionError` is true, then the WebSocket will be closed, and the `close` event will be called immediately afterwards, unless `_doNotEmitClose` is set to `true`. (It is on ServerClient)
     - Connection errors are emits only once per connection.
     - Does **NOT** get emit if the error is a connection error, and the connection is a session resume attempt.
 * `event: close(code, message, error)`: Whenever the connection closes.
-    - `code` and `message` are the WebSocket `CloseEvent`'s close code and reason, respectively.
+    - `code` and `message` are the WebSocket `CloseEvent`'s close code and reason, respectively. Both null if `error` is not null.
     - `error` only exists if the connection is closing due to an error.
     - Emits only once per connection.
     - Does **NOT** get emit if the connection is a session resume attempt.
@@ -74,6 +74,42 @@ This is the class that is extended by both Client and ServerClient.
 * `prop: _messageQueue`: Message queue. Currently an instance of `async.queue`
 * `method: _attachEvents()`: Listens to the `message`, `error`, and `close` messages of the websocket.
 * `method: _detachEvents()`: Detaches from the `message`, `error`, and `close` events, setting them to use dummy handlers.
-* `method: _handleMessage()`: Handles messages that are actions, action responses, or events.
+* `method: _handleMessage(messageEvent)`: Handles messages that are actions, action responses, or events.
     - Currently only supports JSON data, but binary support is planned. ([#26](https://github.com/seapunk/socketeer/issues/26))
-* `method: _handleError()`: Handles WebSocket errors.
+* `method: _handleError(err)`: Handles WebSocket errors.
+    - Does not get processed if `_socketeerClosing` is true.
+    - Sets `_closeMustHaveError` to `true`.
+* `prop: _closeMustHaveError`: Boolean variable that indicates whether `_handleClose` should wait for the function call that has an error, because the connection is closing because of that error.
+    - This prevents a potential race condition of `ws` synchronously emitting the `close` event, and resultingly calling `_handleClose` before `_handleError` gets the chance to call `_handleClose`, and include the error.
+* `prop: _socketeerClosing`: Boolean variable that indicates that Socketeer is closing the connection.
+    - This is to ensure that `_handleClose` and `_handleError` only get processed once.
+        + If just `_handleClose` is processed, it will also ensure `_handleError` is never processed until a new connection is initialized.
+    - Must be manually reset by the inheriting class when appropriate.
+* `method: _handleClose(closeEvent)`: Handles WebSocket closes.
+    - If `error` is not provided, yet `_closeMustHaveError` is true, then it does not continue.
+    - Otherwise, `_closeMustHaveError` is reset to false.
+    - Does not get processed if `_socketeerClosing` is true.
+    - Calls `_resolveSessionResume` with `false` if the connection was a session resume attempt.
+    - Does not emit the `close` event if either `_resoleSessionResume` or `_doNotEmitClose` are truthy.
+* `prop: _doNotEmitClose`: Whether `_handleError` should emit a `close` event.
+    - Manually set by the inheriting class.
+* `method: _processQueue(msg, done)`: Sends the next message in the message queue.
+    - Does not send data, requeues the data (at the beginning) and pauses the message queue if the connection is not open.
+* `method: _resumeMessageQueue()`: Resumes the message queue.
+* `method: _clearMessageQueue()`: Clears the message queue.
+* `method: _handleAction(data)`: Handles the action, calling the action handler if it exists.
+    - The handler *must* be return a Promise.
+    - Sends `ActionResponse.ERROR` if:
+        + Handler does not return a Promise
+        + Handler errored out (by either call fail or Promise rejection)
+    - If `ActionResponse.ERROR` is sent, then the `error` event is also emitted.
+    - Sends `ActionResponse.NONEXISTENT` if the action handler does not exist.
+* `method: _handleActionResponse(data)`: Handles the action response, calling the action response handler, if it exists.
+    - Cleans up after itself. If the handler has been used, then it will remove it from the `_actionPromises` map.
+    - If there is no handler, then it will ignore it.
+    - If the response handler errors out, the `error` event will be emitted.
+* `method: _handleEvent(data)`: Handles events.
+    - If there are no handlers, then it will ignore the event.
+    - If an event handler errors out, the `error` event will be emitted, and the remaining handlers will be called.
+* `method: _generateActionId()`: Returns, and increments the `_currentActionId` property.
+* `method: _validateSessionResumeToken(token)`: Makes sure the data is a valid session resume token. Returns true if the token is valid.
