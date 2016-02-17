@@ -149,7 +149,10 @@ class ClientPool {
   reserveNewToken () {
     return new Promise((resolve, reject) => {
       this._d('reserving new token')
-      if (!this.server.supportsResuming) return resolve(null)
+      if (!this.server.supportsResuming) {
+        this._d('server does not support session resuming')
+        return resolve(null)
+      }
       forever((next) => {
         this.generateToken().then((token) => {
           if (this.tokenInUse(token)) return next()

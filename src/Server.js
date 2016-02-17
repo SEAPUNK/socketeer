@@ -128,6 +128,7 @@ class Server extends EventEmitter {
         this._d(`warning: called setupErrorHandler more than twice: ${maybestack(err)}`)
         return
       }
+      this._d('called setup error handler')
       calledSetupErrorHandler = true
       client.removeAllListeners('error')
       client.on('error', (err) => {
@@ -137,6 +138,7 @@ class Server extends EventEmitter {
     }
 
     const handleSessionResume = (newResumeToken) => {
+      this._d(`handling session resume w/ token: ${newResumeToken}`)
       if (!newResumeToken) {
         // Session resume failed.
         client.ws.send('ok:-:', () => {
@@ -149,6 +151,7 @@ class Server extends EventEmitter {
     }
 
     const setupConnection = (newResumeToken) => {
+      this._d(`setting up connection w/ token: ${newResumeToken}`)
       try {
         client.removeAllListeners('error')
         if (!client.isOpen()) {
@@ -170,7 +173,8 @@ class Server extends EventEmitter {
     }
 
     const handleNewSession = (newResumeToken) => {
-      (Promise.resolve().then(() => {
+      this._d(`handling new session w/ token: ${newResumeToken}`)
+      ;(Promise.resolve().then(() => {
         if (this._middlewares.length) {
           this._d(`running ${this._middlewares.length} middleware on client`)
           return Promise.each(this._middlewares, (middleware, idx) => {
@@ -199,12 +203,13 @@ class Server extends EventEmitter {
     }
 
     client._handshakePromise.then((obj) => {
+      this._d('handshake resolved')
       const isResume = obj.isResume
       const newResumeToken = obj.newResumeToken
       if (isResume) {
-        handleSessionResume.bind(newResumeToken)
+        handleSessionResume(newResumeToken)
       } else {
-        handleNewSession.bind(newResumeToken)
+        handleNewSession(newResumeToken)
       }
     }).catch((err) => {
       // Handshake failed, and the client has closed and cleaned up.
