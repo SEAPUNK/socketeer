@@ -41,6 +41,7 @@ API: Client
     - Reconnects only one per client disconnection.
     - Waits a period of time before *actually* reconnecting (see `options.reconnectWait`), unless `immediate` is set to `true`.
     - Deletes any existing session resume token, if any.
+* `prop: ws`: `ws.WebSocket` instance
 
 
 **Private API (development reference)**

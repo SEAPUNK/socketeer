@@ -33,19 +33,24 @@ class ClientAbstract extends EventEmitter {
     this._emit = super.emit.bind(this) // EventEmitter's emit
     this.PROTOCOL_VERSION = PROTOCOL_VERSION
     if (!this._d) this._d = () => {}
-    this._da = (msg) => this._d(`[abstract] ${msg}`)
 
     this._events = new Map()
     this._actions = new Map()
     this._actionPromises = new Map()
     this._currentActionId = 0
     this._messageQueue = new MessageQueue((msg, done) => this._processQueue(msg, done))
+    // The message queue is paused by default.
+    this._messageQueue.pause()
 
     this._doNotEmitClose = false
 
     // Reserved variable for anyone except the library to use.
     // Helps with not polluting the Socketeer instance namespace.
     this.data = {}
+  }
+
+  _da (msg) {
+    this._d(`[abstract] ${msg}`)
   }
 
   _attachEvents () {

@@ -43,8 +43,8 @@ This is the class that is extended by both Client and ServerClient.
     - If you try to attach a handler to an action that already has a handler, this function will throw an error, unless `force` is `true`.
         + If `force` is `true`, the handler will be overriden.
     - If the handler errors out, the `error` event will be emitted
-* `method: close(code, message)`: Closes the connection (passes the arguments to `ws.Client.close`)
-* `method: terminate()`: Terminates the connection (passes the arguments to `ws.Client.terminate`)
+* `method: close(code, message)`: Closes the connection (passes the arguments to `ws.WebSocket.close`)
+* `method: terminate()`: Terminates the connection (passes the arguments to `ws.WebSocket.terminate`)
     - It's preferred that `close()` is used instead.
 * `method: isOpening()`: Whether the socket's readyState is `OPENING`.
 * `method: isOpen()`: Whether the socket's readyState is `OPEN`

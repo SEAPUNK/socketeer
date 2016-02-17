@@ -8,10 +8,13 @@ const forever = require('async').forever
 class ClientPool {
   constructor () {
     this._d = debug('socketeer:ClientPool')
+
     this.pool = new Map()
     this._reservedIds = new Set()
-    this._sessionPool = new Map()
-    this._deletedSessions = new Map()
+
+    this.sessionPool = new Map()
+    this._reservedTokens = new Set()
+    this._deletedTokens = new Map()
   }
 
   add (client, id) {
@@ -63,7 +66,7 @@ class ClientPool {
 
   attemptResume (token, ip) {
     this._d('attempting session resume')
-    const session = this._sessionPool.get(token)
+    const session = this.sessionPool.get(token)
     if (!session) return false
     if (session.active) return false
     // TODO: Issue #22
@@ -77,7 +80,7 @@ class ClientPool {
     this.deleteToken(token)
     const newToken = this.generateToken()
     session.client._resumeToken = newToken
-    this._sessionPool.set(newToken, {
+    this.sessionPool.set(newToken, {
       client: session.client,
       ip: session.ip,
       active: true,
@@ -86,38 +89,60 @@ class ClientPool {
     return newToken
   }
 
+  reserveNewToken () {
+    return new Promise((resolve, reject) => {
+      forever((next) => {
+        this.generateToken().then((token) => {
+          if (this.tokenInUse(token)) return next()
+          next({
+            isOkay: true,
+            token: token
+          })
+        }).catch((err) => {
+          next(err)
+        })
+      }, (err) => {
+        if (err && err.isOkay) {
+          resolve(err.token)
+        } else {
+          reject(err)
+        }
+      })
+    })
+  }
+
+  tokenInUse (token) {
+    return !!(
+      this.sessionPool.get(token) ||
+      this._reservedTokens.has(token) ||
+      this._deletedTokens.get(token)
+    )
+  }
+
   generateToken () {
     // TODO: Non-cryptographically secure token configuration
     // TODO: Stronger generation (hex is only half-effective string length-wise)
     return new Promise((resolve, reject) => {
-      forever((next) => {
-        randomBytes(75, (err, buf) => {
-          if (err) return next(err)
-          const token = buf.toString('hex')
-          
-        })
-      }, (err) => {
-        if (
-          typeof err === 'string' &&
-          err.indexOf('ok') === 0
-        ) return resolve(err.replace(/^ok/, ''))
-        reject(err)
-      })      
+      randomBytes(75, (err, buf) => {
+        if (err) return reject(err)
+        const token = buf.toString('hex')
+        return resolve(token)
+      })
     })
   }
 
   deleteToken (token) {
     this._d('deleting session resume token')
-    const session = this._sessionPool.get(token)
+    const session = this.sessionPool.get(token)
     // TODO: Should this throw an error instead?
     if (!session) return false
-    this._sessionPool.delete(token)
+    this.sessionPool.delete(token)
     // The session should have already called (or cleared) the timeout
     // and whatnot, so we're not doing any of that.
     const timeout = setTimeout(() => {
-      this._deletedSessions.delete(token)
+      this._deletedTokens.delete(token)
     }, (1000 * 60 * 60 * 6)) // TODO: 6 hours ATM, but make configurable.
-    this._deletedSessions.set(token, {
+    this._deletedTokens.set(token, {
       timeout: timeout
     })
   }
