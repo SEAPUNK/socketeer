@@ -146,7 +146,8 @@ class Server extends EventEmitter {
         })
       } else {
         // Session resume succeeded.
-        // TODO: Finish the setup
+        // TODO: Get the client that had that session
+        // client._replaceSocket()
       }
     }
 

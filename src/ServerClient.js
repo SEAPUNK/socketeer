@@ -13,6 +13,9 @@ class ServerClient extends ClientAbstract {
     this._handshakeFinished = false
     this._sessionToken = null
 
+    this.server = server
+    this.id = this.server.pool.generateId()
+
     // ClientAbstract will not emit the 'close' event with this set to true.
     // This is because we want to decide when the 'close' event is emitted:
     // Our custom _handleClose handler is going to emit a 'pause' event,
@@ -20,9 +23,6 @@ class ServerClient extends ClientAbstract {
     // timeout will emit the real 'close' event.
     // TODO: Change this to closeIsPause
     this._doNotEmitClose = this.server.supportsResuming
-
-    this.id = this.server.pool.generateId()
-    this.server = server
     this.ws = ws
     this.ip = ws._socket.remoteAddress
     this._d(`new ServerClient from IP address: ${this.ip}`)
@@ -168,6 +168,7 @@ class ServerClient extends ClientAbstract {
     this.server.pool.createSession(newToken, this, this.ip)
     this.server.pool.add(this, this.id)
     this.server.room._joinAll(this)
+    this.ws.send(`ok:${(newToken) ? 'y' : 'n'}:${newToken || ''}`)
     this.server.emit('connection', this)
   }
 
@@ -207,13 +208,15 @@ class ServerClient extends ClientAbstract {
     }
   }
 
-  _replaceSocket (ws) {
+  _replaceSocket (ws, newToken) {
     this._d(`hot-swapping websockets for ServerClient id ${this.id} @ ip ${this.ip}`)
     this._socketeerClosing = false
     this.ws = ws
     this.ip = ws._socket.remoteAddress
+    this._sessionToken = newToken
     this._d(`hot-swapped websocket's IP address: ${this.ip}`)
     this._attachEvents()
+    this.ws.send(`ok:+:${newToken}`)
     this._resumeMessageQueue()
   }
 }

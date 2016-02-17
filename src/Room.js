@@ -27,7 +27,7 @@ class Room {
 
   exists (client) {
     this._d(`checking if client exists in room: ${client.id}`)
-    return this._clients.get(client)
+    return this._clients.has(client)
   }
 
   emit (name, data) {
