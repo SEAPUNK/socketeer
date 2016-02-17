@@ -53,7 +53,7 @@ This is the class that is extended by both Client and ServerClient.
 
 **Private API (development reference)**
 
-* `provided prop: _d`: `debug` module instance. If you're extending the class, you need to provide this variable in the top-level class.
+* `prop: _d`: Noop function, but should be a `debug` module instance. Provide the variable when extending the class.
 * `method: _emit`: `EventEmitter`'s emit function.
 * `prop: _events`: Event name to event handlers mapping.
 * `prop: _actions`: Action name to action handler mapping.

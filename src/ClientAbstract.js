@@ -32,6 +32,7 @@ class ClientAbstract extends EventEmitter {
 
     this._emit = super.emit.bind(this) // EventEmitter's emit
     this.PROTOCOL_VERSION = PROTOCOL_VERSION
+    if (!this._d) this._d = () => {}
 
     this._events = new Map()
     this._actions = new Map()
