@@ -50,6 +50,17 @@ This is the class that is extended by both Client and ServerClient.
 * `method: isOpen()`: Whether the socket's readyState is `OPEN`
 * `method: isClosing()`: Whether the socket's readyState is `CLOSING`
 * `method: isClosed()`: Whether the socket's readyState is `CLOSED`
+* `event: error(err, connectionError)`: Whenever an error occurs.
+    - If the error is an error related to the WebSocket connection, then `connectionError` will be true.
+    - If `connectionError` is true, then the `close` event will be called immediately afterwards.
+    - Connection errors are emits only once per connection.
+    - Does **NOT** get emit if the error is a connection error, and the connection is a session resume attempt.
+* `event: close(code, message, error)`: Whenever the connection closes.
+    - `code` and `message` are the WebSocket `CloseEvent`'s close code and reason, respectively.
+    - `error` only exists if the connection is closing due to an error.
+    - Emits only once per connection.
+    - Does **NOT** get emit if the connection is a session resume attempt.
+    - Does **NOT** get emit if `_doNotEmitClose` is set to `true`.
 
 **Private API (development reference)**
 
@@ -65,3 +76,4 @@ This is the class that is extended by both Client and ServerClient.
 * `method: _detachEvents()`: Detaches from the `message`, `error`, and `close` events, setting them to use dummy handlers.
 * `method: _handleMessage()`: Handles messages that are actions, action responses, or events.
     - Currently only supports JSON data, but binary support is planned. ([#26](https://github.com/seapunk/socketeer/issues/26))
+* `method: _handleError()`: Handles WebSocket errors.

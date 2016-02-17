@@ -146,7 +146,10 @@ class ClientAbstract extends EventEmitter {
 
   _handleError (err) {
     this._da(`handling error: ${maybestack(err)}`)
-    this._emit('error', err)
+    if (!this._resumePromiseResolve) {
+      // This means we are a Client, and we attempted a session resume.
+      this._emit('error', err, true)
+    }
     this._closeMustHaveError = true
     this.close()
     this._da('error handling: handling close')
