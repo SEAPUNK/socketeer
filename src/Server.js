@@ -102,10 +102,6 @@ class Server extends EventEmitter {
     this._d(`total middleware: ${this._middlewares.length}`)
   }
 
-  _dummyErrorHandler (err) {
-    this._d(`handling error of stopped server: ${maybestack(err)}`)
-  }
-
   stop () {
     this._d('stopping server')
     if (!this.wss) return
@@ -113,7 +109,9 @@ class Server extends EventEmitter {
     this.room.clear()
     this.room._clearAll()
     this.wss.removeAllListeners('error')
-    this.wss.on('error', this._dummyErrorHandler.bind(this))
+    this.wss.on('error', (err) => {
+      this._d(`handling error of stopped server: ${maybestack(err)}`)
+    })
     this.wss.close()
     delete this.wss
   }
@@ -127,7 +125,7 @@ class Server extends EventEmitter {
       if (calledSetupErrorHandler) return
       this._d(`connection setup error handler: ${maybestack(err)}`)
       calledSetupErrorHandler = true
-      this.emit('connection-setup-error', err)
+      this.emit('connectionSetupError', err)
     }
 
     client.on('error', (err) => {

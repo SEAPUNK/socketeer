@@ -10,12 +10,13 @@ API: Server
     - `options`: server options (plain object):
         + `heartbeatTimeout`: How long to wait in ms to wait past the server client sending a 'ping' for the client 'pong' before timing out the connection.
             * default: `15000`
-        + `heartbeatInterval`: How long to wait before sending a `ping` after receiving the client `pong`
+        + `heartbeatInterval`: How long to wait in ms before sending a `ping` after receiving the client `pong`
             * default: `10000`
         + `failless`: Whether Socketeer should handle unhandled `error` events
             * default: `true`
         + `supportsResuming`: Whether the server supports session resuming
             * default: `true`
+* `prop: supportsResuming`: **Read-only** boolean indicating whether the server supports session resuming or not.
 * `prop: room`: RoomManager instance.
 * `prop: pool`: ClientPool instance.
 * `prop: data`: Reserved variable for storing various variables in. Use this to store any non-class-relevant data, so you don't pollute the class namespace.
@@ -41,3 +42,24 @@ API: Server
 * `method: stop()`: Stops the server.
     - Removes all rooms, clears all clients, and stops listening.
     - Server can be started back up with `listen()`.
+* `event: error(err)`: Emits when a server error has occured.
+* `event: headers(headers)`: ws.Server `headers` event.
+* `event: connectionSetupError(err, client)`: Emits when a connection was created, but an error occured while setting it up.
+    - `err` is an error, if applicable
+    - `client` is the defunct ServerClient instance.
+* `event: connection(client)`: Emits when a client is fully set up for use.
+
+**Private API (development reference)**
+
+* `prop: _d`: `debug` module instance.
+* `prop: _heartbeatTimeout`: Configured heartbeat timeout
+* `prop: _heartbeatInterval`: Configured heartbeat interval
+* `prop: _middlewares`: List of middleware to run on a client.
+* `prop: _failless`: Whether the server should handle all unhandled Server and ServerClient errors
+* `method: _handleError(err)`: Handles errors. Emits `error` event.
+* `method: _handleHeaders(headers)`: Handles `headers` event. Emits `headers` event.
+* `method: _handleConnection(connection)`: Handles and sets up a new connection. Emits a `connectionSetupError` if something goes wrong during setup.
+    - Creates a ServerClient out of the connection
+    - Awaits the ServerClient to finish the handshake to determine whether it's a new connection, a failed session resume attempt, or a successful resume attempt.
+    - If not a resume attempt, runs the ServerClient through the middlewares.
+    - Registers the client.
