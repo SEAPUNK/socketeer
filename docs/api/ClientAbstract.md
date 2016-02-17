@@ -54,11 +54,14 @@ This is the class that is extended by both Client and ServerClient.
 **Private API (development reference)**
 
 * `prop: _d`: Noop function, but should be a `debug` module instance. Provide the variable when extending the class.
-* `method: _emit`: `EventEmitter`'s emit function.
+* `method: _da(msg)`: Wrapper for the `_d` function, that prepends the string '[abstract] ' to each message.
+* `method: _emit(name, ...args)`: `EventEmitter`'s emit function.
 * `prop: _events`: Event name to event handlers mapping.
 * `prop: _actions`: Action name to action handler mapping.
 * `prop: _actionPromises`: Action ID to action response handler mapping.
 * `prop: _currentActionId`: Action ID that will be used for the next action request. Increments with each action sent.
-* `prop: _messageQueue`: Message queue.
-* `method: _attachEvents`: Listens to the `message`, `error`, and `close` messages of the websocket.
-* `method: _detachEvents`: Detaches from the `message`, `error`, and `close` events, setting them to use dummy handlers.
+* `prop: _messageQueue`: Message queue. Currently an instance of `async.queue`
+* `method: _attachEvents()`: Listens to the `message`, `error`, and `close` messages of the websocket.
+* `method: _detachEvents()`: Detaches from the `message`, `error`, and `close` events, setting them to use dummy handlers.
+* `method: _handleMessage()`: Handles messages that are actions, action responses, or events.
+    - Currently only supports JSON data, but binary support is planned. ([#26](https://github.com/seapunk/socketeer/issues/26))
