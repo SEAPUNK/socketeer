@@ -46,14 +46,14 @@ class Server extends EventEmitter {
     return new Promise((resolve, reject) => {
       let hasPort = false
       if (port === null) {
-        throw new Error('port and/or options must be specified')
+        reject(new Error('port and/or options must be specified'))
       } else if (
         typeof port !== 'string' &&
         typeof port !== 'number'
       ) {
         opts = port
         if (!opts.server) {
-          throw new Error('port and/or server must be specified')
+          reject(new Error('port and/or server must be specified'))
         }
       } else {
         hasPort = true
@@ -66,13 +66,13 @@ class Server extends EventEmitter {
       opts.disableHixie = true
       // TODO: Should we allow perMessageDeflate to be configurable?
       opts.perMessageDeflate = false
-      this.ws = new ws.Server(opts, (err) => {
+      this.wss = new ws.Server(opts, (err) => {
         if (err) return reject(err)
         resolve()
       })
-      this.ws.on('error', this._handleError.bind(this))
-      this.ws.on('headers', this._handleHeaders.bind(this))
-      this.ws.on('connection', this._handleConnection.bind(this))
+      this.wss.on('error', (err) => this._handleError(err))
+      this.wss.on('headers', (headers) => this._handleHeaders(headers))
+      this.wss.on('connection', (connection) => this._handleConnection(connection))
       if (!hasPort) resolve()
     })
   }
@@ -108,14 +108,14 @@ class Server extends EventEmitter {
 
   stop () {
     this._d('stopping server')
-    if (!this.ws) return
+    if (!this.wss) return
     this.pool.clear()
     this.room.clear()
     this.room._clearAll()
-    this.ws.removeAllListeners('error')
-    this.ws.on('error', this._dummyErrorHandler.bind(this))
-    this.ws.close()
-    delete this.ws
+    this.wss.removeAllListeners('error')
+    this.wss.on('error', this._dummyErrorHandler.bind(this))
+    this.wss.close()
+    delete this.wss
   }
 
   _handleConnection (connection) {
