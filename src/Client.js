@@ -200,7 +200,7 @@ class Client extends ClientAbstract {
       parts[2] < 0 ||
       parts[2] > 2147483647
     ) {
-      return this._handleError(new Error('handshake: heartbeat interval is an invalida number'))
+      return this._handleError(new Error('handshake: heartbeat interval is an invalid number'))
     }
 
     this._heartbeatInterval = serverHeartbeatInterval
@@ -313,6 +313,7 @@ class Client extends ClientAbstract {
   _finalizeHandshake (isSessionResume) {
     if (!isSessionResume) this._clearMessageQueue()
     this._isReady = true
+    this._resetHeartbeatTimeout()
     this._resumeMessageQueue()
     if (!isSessionResume) this._emit('open', this._isReconnection)
     if (isSessionResume) this._resolveSessionResume(true)
@@ -386,10 +387,10 @@ class Client extends ClientAbstract {
 
   _doReconnect () {
     this._d('reconnecting')
-    this._socketeerClosing = false
     this._handshakeStep = 0
     this._willReconnect = false
     this._isReconnection = true
+    this._socketeerClosing = false
     this._createWebsocket()
   }
 }
