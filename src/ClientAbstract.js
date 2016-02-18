@@ -9,23 +9,6 @@ const inspect = require('util').inspect
 
 const PROTOCOL_VERSION = 2
 
-/*
-  EventEmitter reserved fields:
-  domain
-  _events
-  _eventsCount
-  _maxListeners
-  setMaxListeners
-  getMaxListneers
-  emit
-  addListener
-  on
-  once
-  removeListener
-  removeAllListeners
-  listeners
-  listenerCount
- */
 class ClientAbstract extends EventEmitter {
   constructor () {
     super()
