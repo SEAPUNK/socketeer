@@ -33,6 +33,7 @@ class Client extends ClientAbstract {
     this._resumePromiseResolve = null
     this._resumeToken = null
     this._handshakeTimer = null
+    this._heartbeatTimer = null
 
     if (this._failless) {
       _d('[failless] adding client error handler')

@@ -83,3 +83,16 @@ Development reference: Used to explain which variable is which, and what it's us
         + Last handshake message has been received
     - Timer when:
         + The connection to the server has been opened
+
+`_heartbeatTimer`
+---
+
+* **Default**: `null`
+* **What**: Provides a way to stop the existing heartbeat timeout timer
+* **Used for**: Clearing the existing heartbeat timeout timer
+* **Conditions**:
+    - `null` when:
+        + Client is first created
+        + Connection is closed
+    - Timer when:
+        + The handshake has been finished, and the client is now ready
