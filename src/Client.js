@@ -301,7 +301,6 @@ class Client extends ClientAbstract {
       parts[1] === 'n'
     ) {
       this._d('server does not support session resuming')
-      this._resumeToken = null
       this._finalizeHandshake(false)
     } else {
       return this._handleError(new Error('handshake finalization: invalid session resume status'))
