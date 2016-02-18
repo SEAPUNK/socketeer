@@ -34,6 +34,7 @@ class Client extends ClientAbstract {
     this._resumeToken = null
     this._handshakeTimer = null
     this._heartbeatTimer = null
+    this._willReconnect = false
 
     if (this._failless) {
       _d('[failless] adding client error handler')

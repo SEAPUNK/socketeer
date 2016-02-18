@@ -96,3 +96,16 @@ Development reference: Used to explain which variable is which, and what it's us
         + Connection is closed
     - Timer when:
         + The handshake has been finished, and the client is now ready
+
+`_willReconnect`
+---
+
+* **Default**: `false`
+* **What**: Indicates whether the client will reconnect
+* **Used for**: Preventing duplicate calls to the reconnect function
+* **Conditions**:
+    - `false` when:
+        + Client is first created
+        + Client actually reconnects to the server
+    - `true` when:
+        + The timer has been created for the reconnection
