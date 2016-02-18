@@ -30,8 +30,7 @@
   "standard": {
     "ignore": [
       "lib/old/",
-      "lib/",
-      "test/"
+      "lib/"
     ],
     "parser": "babel-eslint"
   },
