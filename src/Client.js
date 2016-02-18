@@ -32,6 +32,7 @@ class Client extends ClientAbstract {
     this._handshakeStep = 0
     this._resumePromiseResolve = null
     this._resumeToken = null
+    this._handshakeTimer = null
 
     if (this._failless) {
       _d('[failless] adding client error handler')

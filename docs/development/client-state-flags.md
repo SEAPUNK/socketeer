@@ -70,3 +70,16 @@ Development reference: Used to explain which variable is which, and what it's us
         + First handshake message from the server has been received
     - `2` when:
         + Second handshake message from the server has been received
+
+`_handshakeTimer`
+---
+
+* **Default**: `null`
+* **What**: Provides a way to stop the existing handshake timeout timer
+* **Used for**: Clearing the existing handshake timeout timer
+* **Conditions**:
+    - `null` when:
+        + Client is first created
+        + Last handshake message has been received
+    - Timer when:
+        + The connection to the server has been opened
