@@ -35,6 +35,7 @@ class Client extends ClientAbstract {
     this._handshakeTimer = null
     this._heartbeatTimer = null
     this._willReconnect = false
+    // TODO: Introduce _handshakeFinished
 
     if (this._failless) {
       _d('[failless] adding client error handler')
@@ -71,6 +72,8 @@ class Client extends ClientAbstract {
   }
 
   _handleClose (closeEvent) {
+    // TODO: Use _handshakeFinished to throw an error if the handshake is incomplete
+
     this._isReady = false
     this._stopHeartbeatTimeout()
     super._handleClose(closeEvent)
