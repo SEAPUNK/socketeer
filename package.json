@@ -4,7 +4,7 @@
   "description": "yet another websocket framework",
   "main": "lib/index.js",
   "scripts": {
-    "test": "standard && ava --verbose",
+    "test": "standard && ava",
     "build": "babel -d lib src",
     "prepublish": "npm run build",
     "buildtest": "npm run build && npm run test"
@@ -53,5 +53,8 @@
   },
   "engines": {
     "node": ">= 4.0.0"
+  },
+  "ava": {
+    "verbose": true
   }
 }
