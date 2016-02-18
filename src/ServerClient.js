@@ -21,8 +21,7 @@ class ServerClient extends ClientAbstract {
     // Our custom _handleClose handler is going to emit a 'pause' event,
     // to indicate the session no longer connected, but the session reconnect
     // timeout will emit the real 'close' event.
-    // TODO: Change this to closeIsPause
-    this._doNotEmitClose = this.server.supportsResuming
+    this._closeIsPause = this.server.supportsResuming
     this.ws = ws
     this.ip = ws._socket.remoteAddress
     this._d(`new ServerClient from IP address: ${this.ip}`)
@@ -201,12 +200,7 @@ class ServerClient extends ClientAbstract {
       this.pool.remove(this.id)
     }
 
-    // TODO: Change this to closeIsPause
     super._handleClose(closeEvent)
-
-    if (this.server.supportsResuming) {
-      return this._emit('pause', closeEvent.code, closeEvent.reason, closeEvent.error || null)
-    }
   }
 
   _replaceSocket (ws, newToken) {

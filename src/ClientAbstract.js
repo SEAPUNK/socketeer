@@ -25,7 +25,6 @@ class ClientAbstract extends EventEmitter {
     // The message queue is paused by default.
     this._messageQueue.pause()
 
-    this._doNotEmitClose = false
     this._closeMustHaveError = false
     this._socketeerClosing = false
 
@@ -168,11 +167,10 @@ class ClientAbstract extends EventEmitter {
       // This means we are a Client, and we attempted a session resume.
       // We *should* have this function.
       this._resolveSessionResume(false)
-    } else if (!this._doNotEmitClose) {
-      this._emit('close', code, message, error)
-    } else {
-      // Do nothing.
     }
+
+    const eventName = (this._closeIsPause) ? 'pause' : 'close'
+    this._emit(eventName, code, message, error)
   }
 
   _processQueue (msg, done) {
