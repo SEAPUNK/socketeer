@@ -7,6 +7,7 @@
 * Updated dependencies:
     - `maybestack` from `1.0.1` to `2.0.0`
     - `ava` from `0.11.0` to `0.12.0`
+* Created documentation for client state
 
 0.8.0
 ===
