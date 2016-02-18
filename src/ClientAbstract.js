@@ -5,7 +5,6 @@ const maybestack = require('maybestack')
 const exists = require('deep-exists')
 const MessageQueue = require('./MessageQueue')
 const ActionResponse = require('./enums').ActionResponse
-const inspect = require('util').inspect
 
 const PROTOCOL_VERSION = 2
 
@@ -159,8 +158,8 @@ class ClientAbstract extends EventEmitter {
     }
     this._socketeerClosing = true
     this._closeMustHaveError = false
-    this._da('close code: ' + inspect(code))
-    this._da('close message: ' + inspect(message))
+    this._da('close code: ' + code)
+    this._da('close message: ' + message)
     this._da('close error: ' + maybestack(error))
     this._detachEvents()
     if (this._resumePromiseResolve) {
