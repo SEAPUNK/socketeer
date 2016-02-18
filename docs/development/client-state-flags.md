@@ -14,7 +14,7 @@ Development reference: Used to explain which variable is which, and what it's us
         + Client is first created
         + Client disconnects from the server
     - `true` when:
-        + Client has connected to the server, AND has completed the handshake in its entirety
+        + Client has connected to the server, AND has completed the handshake in its entirety, and will keep the connection open
 
 `_isReconnection`
 ---
