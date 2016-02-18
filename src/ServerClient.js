@@ -169,6 +169,7 @@ class ServerClient extends ClientAbstract {
     this.server.pool.add(this, this.id)
     this.server.room._joinAll(this)
     this.ws.send(`ok:${(newToken) ? 'y' : 'n'}:${newToken || ''}`)
+    this._resumeMessageQueue()
     this.server.emit('connection', this)
   }
 
