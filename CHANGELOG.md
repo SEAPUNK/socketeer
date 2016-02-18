@@ -1,7 +1,8 @@
 0.8.1
 ===
 
-
+* Cleaned up `.gitignore`
+* Cleaned up `.npmignore` (the published package will be much smaller!)
 
 0.8.0
 ===
