@@ -68,6 +68,7 @@ class Client extends ClientAbstract {
 
   _handleClose (closeEvent) {
     this._isReady = false
+    this._stopHeartbeatTimeout()
     super._handleClose(closeEvent)
   }
 
@@ -335,6 +336,7 @@ class Client extends ClientAbstract {
     this._stopHeartbeatTimeout()
 
     this._heartbeatTimer = setTimeout(() => {
+      if (!this._isReady) return
       this._d('heartbeat timeout called')
       this._handleError(new Error('heartbeat timeout'))
     }, timeoutPeriod)

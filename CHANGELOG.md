@@ -9,6 +9,7 @@
     - `ava` from `0.11.0` to `0.12.0`
 * Created documentation for client state
 * Fixed prevention of false-positive handshake timeouts
+* Fixed prevention of false-positive heartbeat timeouts, and fixed the cleanup of heartbeat timeouts
 
 0.8.0
 ===
