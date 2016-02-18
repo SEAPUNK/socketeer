@@ -263,7 +263,6 @@ class Client extends ClientAbstract {
       parts[1] === '-'
     ) {
       this._d('session resume failed')
-      this._ready = true // so _handleClose does not emit an error
       this.close()
     } else if (
       parts[1] === '+'
