@@ -88,7 +88,7 @@ class Client extends ClientAbstract {
 
   _failHandshake () {
     // Don't fail the handshake if the connection is already ready.
-    if (this.isReady) return
+    if (this._isReady) return
     this._d('failing handshake')
     this._handleError('handshake timed out')
   }
