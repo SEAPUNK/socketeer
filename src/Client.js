@@ -49,6 +49,8 @@ class Client extends ClientAbstract {
   _createWebsocket () {
     this._d('creating websocket')
     this.ws = WebSocket.apply(null, this._wsConstructArgs)
+    // See docs/development/extending-client-abstract.md
+    this._socketeerClosing = false
     this._attachEvents()
   }
 
@@ -390,7 +392,6 @@ class Client extends ClientAbstract {
     this._handshakeStep = 0
     this._willReconnect = false
     this._isReconnection = true
-    this._socketeerClosing = false
     this._createWebsocket()
   }
 }

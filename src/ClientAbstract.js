@@ -26,6 +26,8 @@ class ClientAbstract extends EventEmitter {
     this._messageQueue.pause()
 
     this._doNotEmitClose = false
+    this._closeMustHaveError = false
+    this._socketeerClosing = false
 
     // Reserved variable for anyone except the library to use.
     // Helps with not polluting the Socketeer instance namespace.
