@@ -115,22 +115,6 @@ class ClientAbstract extends EventEmitter {
     this.ws.terminate()
   }
 
-  isOpening () {
-    return this.ws.readyState === this.ws.CONNECTING
-  }
-
-  isOpen () {
-    return this.ws.readyState === this.ws.OPEN
-  }
-
-  isClosing () {
-    return this.ws.readyState === this.ws.CLOSING
-  }
-
-  isClosed () {
-    return this.ws.readyState === this.ws.CLOSED
-  }
-
   _handleError (err) {
     this._da(`handling error: ${maybestack(err)}`)
     // Assure that _handleClose or _handleError emits an event only once.
@@ -138,8 +122,9 @@ class ClientAbstract extends EventEmitter {
       this._da('socketeer is closing, ignoring _handleError')
       return
     }
+    // If we are doing a session resume,
+    // we do *not* want to emit an error event.
     if (!this._resumePromiseResolve) {
-      // This means we are a Client, and we attempted a session resume.
       this._emit('error', err, true)
     }
     this._closeMustHaveError = true
@@ -180,7 +165,7 @@ class ClientAbstract extends EventEmitter {
     this._detachEvents()
     if (this._resumePromiseResolve) {
       // This means we are a Client, and we attempted a session resume.
-      // We _should_ have this function.
+      // We *should* have this function.
       this._resolveSessionResume(false)
     } else if (!this._doNotEmitClose) {
       this._emit('close', code, message, error)
@@ -356,11 +341,6 @@ class ClientAbstract extends EventEmitter {
     this._actions.set(name, handler)
   }
 
-  _generateActionId () {
-    this._da(`generated action id: ${this._currentActionId}`)
-    return this._currentActionId++
-  }
-
   // TODO: Action timeouts
   request (name, data) {
     return new Promise((resolve, reject) => {
@@ -377,6 +357,11 @@ class ClientAbstract extends EventEmitter {
     })
   }
 
+  _generateActionId () {
+    this._da(`generated action id: ${this._currentActionId}`)
+    return this._currentActionId++
+  }
+
   _validateSessionResumeToken (token) {
     // Note: If the session resume token does have a : in it during the handshake,
     // then it will cause session resuming to silently fail.
@@ -389,6 +374,22 @@ class ClientAbstract extends EventEmitter {
       return false
     }
     return true
+  }
+
+  isOpening () {
+    return this.ws.readyState === this.ws.CONNECTING
+  }
+
+  isOpen () {
+    return this.ws.readyState === this.ws.OPEN
+  }
+
+  isClosing () {
+    return this.ws.readyState === this.ws.CLOSING
+  }
+
+  isClosed () {
+    return this.ws.readyState === this.ws.CLOSED
   }
 }
 
