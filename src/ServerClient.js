@@ -8,21 +8,22 @@ class ServerClient extends ClientAbstract {
     super()
     this._d = debug('socketeer:ServerClient')
 
+    this.server = server
+    this.id = this.server.pool.generateId()
+
+    // ClientAbstract will not emit the 'close' event with this set to true,
+    // but instead, emit the 'pause' event.
+    // This is because we want to decide when the 'close' event is emitted:
+    // The 'pause' event will be emitted to indicate the session is no longer
+    // connected, but the session reconnect timeout will
+    // emit the real 'close' event.
+    this._closeIsPause = this.server.supportsResuming
+
     this._isReady = false
     this._handshakeOver = false
     this._handshakeFinished = false
     this._sessionToken = null
 
-    this.server = server
-    this.id = this.server.pool.generateId()
-
-    // ClientAbstract will not emit the 'close' event with this set to true.
-    // This is because we want to decide when the 'close' event is emitted:
-    // Our custom _handleClose handler is going to emit a 'pause' event,
-    // to indicate the session no longer connected, but the session reconnect
-    // timeout will emit the real 'close' event.
-    // TODO: Change this to closeIsPause
-    this._doNotEmitClose = this.server.supportsResuming
     this.ws = ws
     this.ip = ws._socket.remoteAddress
     this._d(`new ServerClient from IP address: ${this.ip}`)
@@ -57,7 +58,7 @@ class ServerClient extends ClientAbstract {
     _d('handling message')
     if (!this._isReady) {
       if (this._handshakeOver) {
-        return this._handleError('client sent an extraneous message during handshake')
+        return this._handleError(new Error('client sent an extraneous message during handshake'))
       }
       this._handshakeOver = true
       this._handleHandshakeMessage(data)
@@ -118,14 +119,17 @@ class ServerClient extends ClientAbstract {
   _attemptSessionResume (token) {
     this._d('attempting session resume')
     if (!this._validateSessionResumeToken(token)) {
-      return this._handleError('client sent invalid session resume token')
+      return this._handleError(new Error('client sent invalid session resume token'))
     }
-    this.server.pool.attemptResume(token, this.ip).then((newToken) => {
+    this.server.pool.attemptResume(token, this.ip).then((obj) => {
       if (!this.isOpen()) return
+      const newToken = obj.newToken
+      const existingClient = obj.existingClient
       this._handshakeFinished = true
       this._handshakeResolve({
         isResume: true,
-        newResumeToken: newToken
+        newResumeToken: newToken,
+        existingClient: existingClient
       })
     }).catch((err) => {
       this._handleError(err)
@@ -201,24 +205,30 @@ class ServerClient extends ClientAbstract {
       this.pool.remove(this.id)
     }
 
-    // TODO: Change this to closeIsPause
     super._handleClose(closeEvent)
-
-    if (this.server.supportsResuming) {
-      return this._emit('pause', closeEvent.code, closeEvent.reason, closeEvent.error || null)
-    }
   }
 
   _replaceSocket (ws, newToken) {
     this._d(`hot-swapping websockets for ServerClient id ${this.id} @ ip ${this.ip}`)
     this._socketeerClosing = false
     this.ws = ws
+    const oldIp = this.ip
     this.ip = ws._socket.remoteAddress
     this._sessionToken = newToken
     this._d(`hot-swapped websocket's IP address: ${this.ip}`)
     this._attachEvents()
     this.ws.send(`ok:+:${newToken}`)
+    this._startHeartbeat()
     this._resumeMessageQueue()
+    this._emit('resume', this.ip, oldIp)
+  }
+
+  _implode () {
+    this.ws.removeAllListeners('close')
+    this.ws.removeAllListeners('error')
+    this.ws.removeAllListeners('message')
+    this.ws.removeAllListeners('open')
+    delete this.ws
   }
 }
 

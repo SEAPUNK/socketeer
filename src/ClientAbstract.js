@@ -5,27 +5,9 @@ const maybestack = require('maybestack')
 const exists = require('deep-exists')
 const MessageQueue = require('./MessageQueue')
 const ActionResponse = require('./enums').ActionResponse
-const inspect = require('util').inspect
 
 const PROTOCOL_VERSION = 2
 
-/*
-  EventEmitter reserved fields:
-  domain
-  _events
-  _eventsCount
-  _maxListeners
-  setMaxListeners
-  getMaxListneers
-  emit
-  addListener
-  on
-  once
-  removeListener
-  removeAllListeners
-  listeners
-  listenerCount
- */
 class ClientAbstract extends EventEmitter {
   constructor () {
     super()
@@ -43,7 +25,8 @@ class ClientAbstract extends EventEmitter {
     // The message queue is paused by default.
     this._messageQueue.pause()
 
-    this._doNotEmitClose = false
+    this._closeMustHaveError = false
+    this._socketeerClosing = false
 
     // Reserved variable for anyone except the library to use.
     // Helps with not polluting the Socketeer instance namespace.
@@ -132,22 +115,6 @@ class ClientAbstract extends EventEmitter {
     this.ws.terminate()
   }
 
-  isOpening () {
-    return this.ws.readyState === this.ws.CONNECTING
-  }
-
-  isOpen () {
-    return this.ws.readyState === this.ws.OPEN
-  }
-
-  isClosing () {
-    return this.ws.readyState === this.ws.CLOSING
-  }
-
-  isClosed () {
-    return this.ws.readyState === this.ws.CLOSED
-  }
-
   _handleError (err) {
     this._da(`handling error: ${maybestack(err)}`)
     // Assure that _handleClose or _handleError emits an event only once.
@@ -155,8 +122,9 @@ class ClientAbstract extends EventEmitter {
       this._da('socketeer is closing, ignoring _handleError')
       return
     }
+    // If we are doing a session resume,
+    // we do *not* want to emit an error event.
     if (!this._resumePromiseResolve) {
-      // This means we are a Client, and we attempted a session resume.
       this._emit('error', err, true)
     }
     this._closeMustHaveError = true
@@ -191,18 +159,17 @@ class ClientAbstract extends EventEmitter {
     }
     this._socketeerClosing = true
     this._closeMustHaveError = false
-    this._da('close code: ' + inspect(code))
-    this._da('close message: ' + inspect(message))
+    this._da('close code: ' + code)
+    this._da('close message: ' + message)
     this._da('close error: ' + maybestack(error))
     this._detachEvents()
     if (this._resumePromiseResolve) {
       // This means we are a Client, and we attempted a session resume.
-      // We _should_ have this function.
+      // We *should* have this function.
       this._resolveSessionResume(false)
-    } else if (!this._doNotEmitClose) {
-      this._emit('close', code, message, error)
     } else {
-      // Do nothing.
+      const eventName = (this._closeIsPause) ? 'pause' : 'close'
+      this._emit(eventName, code, message, error)
     }
   }
 
@@ -267,7 +234,7 @@ class ClientAbstract extends EventEmitter {
     }
 
     // Make sure handlerPromise is actually a promise.
-    if (typeof handlerPromise.then !== 'function' || typeof handlerPromise.catch !== 'function') {
+    if (!handlerPromise || typeof handlerPromise.then !== 'function' || typeof handlerPromise.catch !== 'function') {
       this._da('action handler for action ' + data.a + ' does not return a promise')
       this.send({
         i: data.i,
@@ -373,11 +340,6 @@ class ClientAbstract extends EventEmitter {
     this._actions.set(name, handler)
   }
 
-  _generateActionId () {
-    this._da(`generated action id: ${this._currentActionId}`)
-    return this._currentActionId++
-  }
-
   // TODO: Action timeouts
   request (name, data) {
     return new Promise((resolve, reject) => {
@@ -394,6 +356,11 @@ class ClientAbstract extends EventEmitter {
     })
   }
 
+  _generateActionId () {
+    this._da(`generated action id: ${this._currentActionId}`)
+    return this._currentActionId++
+  }
+
   _validateSessionResumeToken (token) {
     // Note: If the session resume token does have a : in it during the handshake,
     // then it will cause session resuming to silently fail.
@@ -406,6 +373,22 @@ class ClientAbstract extends EventEmitter {
       return false
     }
     return true
+  }
+
+  isOpening () {
+    return this.ws.readyState === this.ws.CONNECTING
+  }
+
+  isOpen () {
+    return this.ws.readyState === this.ws.OPEN
+  }
+
+  isClosing () {
+    return this.ws.readyState === this.ws.CLOSING
+  }
+
+  isClosed () {
+    return this.ws.readyState === this.ws.CLOSED
   }
 }
 

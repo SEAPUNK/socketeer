@@ -1,7 +1,6 @@
 'use strict'
 
 const debug = require('debug')
-const inspect = require('util').inspect
 const maybestack = require('maybestack')
 const WebSocket = require('ws')
 const Promise = require('bluebird')
@@ -15,22 +14,28 @@ class Client extends ClientAbstract {
     const _d = this._d = debug('socketeer:Client')
 
     this._wsConstructArgs = [address, options.protocols, options.ws]
-    _d(`constructing websocket with options: ${inspect(this._wsConstructArgs)}`)
+
     this._heartbeatTimeout = options.heartbeatTimeout || 15000
     _d(`heartbeat timeout set to ${this._heartbeatTimeout}`)
+
     this._handshakeTimeout = options.handshakeTimeout || 10000
     _d(`handshake timeout set to ${this._handshakeTimeout}`)
+
     this._reconnectWait = options.reconnectWait || 5000
     _d(`reconnect wait set to ${this._reconnectWait}`)
+
     this._failless = (options.failless !== false)
     _d(`failless set to ${this._failless}`)
 
     this._isReady = false
     this._isReconnection = false
-    this._handshakeOver = false
-    this._awaitingHandshakeResponse = false
+    this._handshakeStep = 0
     this._resumePromiseResolve = null
     this._resumeToken = null
+    this._handshakeTimer = null
+    this._heartbeatTimer = null
+    this._willReconnect = false
+    // TODO: Introduce _handshakeFinished
 
     if (this._failless) {
       _d('[failless] adding client error handler')
@@ -45,6 +50,8 @@ class Client extends ClientAbstract {
   _createWebsocket () {
     this._d('creating websocket')
     this.ws = WebSocket.apply(null, this._wsConstructArgs)
+    // See docs/development/extending-client-abstract.md
+    this._socketeerClosing = false
     this._attachEvents()
   }
 
@@ -65,7 +72,10 @@ class Client extends ClientAbstract {
   }
 
   _handleClose (closeEvent) {
+    // TODO: Use _handshakeFinished to throw an error if the handshake is incomplete
+
     this._isReady = false
+    this._stopHeartbeatTimeout()
     super._handleClose(closeEvent)
   }
 
@@ -86,9 +96,9 @@ class Client extends ClientAbstract {
 
   _failHandshake () {
     // Don't fail the handshake if the connection is already ready.
-    if (this.isReady) return
+    if (this._isReady) return
     this._d('failing handshake')
-    this._handleError('handshake timed out')
+    this._handleError(new Error('handshake timed out'))
   }
 
   _stopHandshakeTimeout () {
@@ -107,16 +117,18 @@ class Client extends ClientAbstract {
 
     _d('handling message')
     if (!this._isReady) {
-      if (this._handshakeOver) {
-        return this._handleError('server sent unexpected handshake message, although we are done listening')
-      }
       _d('client not ready, handling handshake messages')
-      if (!this._awaitingHandshakeResponse) {
-        this._awaitingHandshakeResponse = true
-        return this._handleServerHandshake(data)
-      } else {
-        this._handshakeOver = true
-        return this._handleHandshakeResponse(data)
+      switch (this._handshakeStep) {
+        case 0:
+          this._handshakeStep = 1
+          return this._handleServerHandshake(data)
+        case 1:
+          this._handshakeStep = 2
+          return this._handleHandshakeResponse(data)
+        case 2:
+          return this._handleError(new Error('server sent unexpected handshake message, although we are done listening'))
+        default:
+          return this._handleError(new Error(`[internal] unknown handshake step: ${this._handshakeStep}`))
       }
     } else {
       if (data === 'h') {
@@ -193,7 +205,7 @@ class Client extends ClientAbstract {
       parts[2] < 0 ||
       parts[2] > 2147483647
     ) {
-      return this._handleError(new Error('handshake: heartbeat interval is an invalida number'))
+      return this._handleError(new Error('handshake: heartbeat interval is an invalid number'))
     }
 
     this._heartbeatInterval = serverHeartbeatInterval
@@ -259,7 +271,6 @@ class Client extends ClientAbstract {
       parts[1] === '-'
     ) {
       this._d('session resume failed')
-      this._ready = true // so _handleClose does not emit an error
       this.close()
     } else if (
       parts[1] === '+'
@@ -298,7 +309,6 @@ class Client extends ClientAbstract {
       parts[1] === 'n'
     ) {
       this._d('server does not support session resuming')
-      this._resumeToken = null
       this._finalizeHandshake(false)
     } else {
       return this._handleError(new Error('handshake finalization: invalid session resume status'))
@@ -308,6 +318,7 @@ class Client extends ClientAbstract {
   _finalizeHandshake (isSessionResume) {
     if (!isSessionResume) this._clearMessageQueue()
     this._isReady = true
+    this._resetHeartbeatTimeout()
     this._resumeMessageQueue()
     if (!isSessionResume) this._emit('open', this._isReconnection)
     if (isSessionResume) this._resolveSessionResume(true)
@@ -333,6 +344,7 @@ class Client extends ClientAbstract {
     this._stopHeartbeatTimeout()
 
     this._heartbeatTimer = setTimeout(() => {
+      if (!this._isReady) return
       this._d('heartbeat timeout called')
       this._handleError(new Error('heartbeat timeout'))
     }, timeoutPeriod)
@@ -380,9 +392,7 @@ class Client extends ClientAbstract {
 
   _doReconnect () {
     this._d('reconnecting')
-    this._socketeerClosing = false
-    this._handshakeOver = false
-    this._awaitingHandshakeResponse = false
+    this._handshakeStep = 0
     this._willReconnect = false
     this._isReconnection = true
     this._createWebsocket()

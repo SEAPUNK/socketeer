@@ -1,10 +1,10 @@
 {
   "name": "socketeer",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "yet another websocket framework",
   "main": "lib/index.js",
   "scripts": {
-    "test": "standard && ava --verbose",
+    "test": "standard && ava",
     "build": "babel -d lib src",
     "prepublish": "npm run build",
     "buildtest": "npm run build && npm run test"
@@ -30,8 +30,10 @@
   "standard": {
     "ignore": [
       "lib/old/",
-      "lib/"
-    ]
+      "lib/",
+      "test/"
+    ],
+    "parser": "babel-eslint"
   },
   "homepage": "https://github.com/SEAPUNK/socketeer#readme",
   "dependencies": {
@@ -39,19 +41,23 @@
     "bluebird": "^3.3.1",
     "debug": "^2.2.0",
     "deep-exists": "^1.0.1",
-    "maybestack": "^1.0.1",
+    "maybestack": "^2.0.0",
     "suspend": "^0.7.0",
     "uuid": "^2.0.1",
     "ws": "^1.0.1",
     "utf-8-validate": "^1.2.1"
   },
   "devDependencies": {
-    "ava": "^0.11.0",
+    "ava": "^0.12.0",
     "babel-cli": "^6.5.1",
+    "babel-eslint": "^5.0.0",
     "babel-preset-es2015-node4": "^2.0.3",
     "standard": "^6.0.5"
   },
   "engines": {
     "node": ">= 4.0.0"
+  },
+  "ava": {
+    "verbose": true
   }
 }
