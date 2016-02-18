@@ -93,7 +93,7 @@ class Client extends ClientAbstract {
     // Don't fail the handshake if the connection is already ready.
     if (this._isReady) return
     this._d('failing handshake')
-    this._handleError('handshake timed out')
+    this._handleError(new Error('handshake timed out'))
   }
 
   _stopHandshakeTimeout () {
@@ -121,9 +121,9 @@ class Client extends ClientAbstract {
           this._handshakeStep = 2
           return this._handleHandshakeResponse(data)
         case 2:
-          return this._handleError('server sent unexpected handshake message, although we are done listening')
+          return this._handleError(new Error('server sent unexpected handshake message, although we are done listening'))
         default:
-          return this._handleError(`[internal] unknown handshake step: ${this._handshakeStep}`)
+          return this._handleError(new Error(`[internal] unknown handshake step: ${this._handshakeStep}`))
       }
     } else {
       if (data === 'h') {

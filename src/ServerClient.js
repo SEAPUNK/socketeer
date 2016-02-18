@@ -57,7 +57,7 @@ class ServerClient extends ClientAbstract {
     _d('handling message')
     if (!this._isReady) {
       if (this._handshakeOver) {
-        return this._handleError('client sent an extraneous message during handshake')
+        return this._handleError(new Error('client sent an extraneous message during handshake'))
       }
       this._handshakeOver = true
       this._handleHandshakeMessage(data)
@@ -118,7 +118,7 @@ class ServerClient extends ClientAbstract {
   _attemptSessionResume (token) {
     this._d('attempting session resume')
     if (!this._validateSessionResumeToken(token)) {
-      return this._handleError('client sent invalid session resume token')
+      return this._handleError(new Error('client sent invalid session resume token'))
     }
     this.server.pool.attemptResume(token, this.ip).then((newToken) => {
       if (!this.isOpen()) return
