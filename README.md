@@ -1,4 +1,4 @@
-socketeer
+socketeer: yet another websocket framework
 ===
 
 [![npm version](https://img.shields.io/npm/v/socketeer.svg?style=flat-square)](https://npmjs.com/package/socketeer)
@@ -12,8 +12,6 @@ socketeer
 **Requires Node 4.x or newer**
 
 `npm install socketeer`
-
-yet another websocket framework
 
 - [usage](docs/usage.md)
 - [documentation](docs/api/index.md)
