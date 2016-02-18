@@ -11,6 +11,7 @@
 * Fixed prevention of false-positive handshake timeouts
 * Fixed prevention of false-positive heartbeat timeouts, and fixed the cleanup of heartbeat timeouts
 * Fixed the starting of the heartbeat timeout on client ready
+* Created documentation for extending ClientAbstract
 
 0.8.0
 ===
