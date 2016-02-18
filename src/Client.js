@@ -1,7 +1,6 @@
 'use strict'
 
 const debug = require('debug')
-const inspect = require('util').inspect
 const maybestack = require('maybestack')
 const WebSocket = require('ws')
 const Promise = require('bluebird')
@@ -15,13 +14,16 @@ class Client extends ClientAbstract {
     const _d = this._d = debug('socketeer:Client')
 
     this._wsConstructArgs = [address, options.protocols, options.ws]
-    _d(`constructing websocket with options: ${inspect(this._wsConstructArgs)}`)
+
     this._heartbeatTimeout = options.heartbeatTimeout || 15000
     _d(`heartbeat timeout set to ${this._heartbeatTimeout}`)
+
     this._handshakeTimeout = options.handshakeTimeout || 10000
     _d(`handshake timeout set to ${this._handshakeTimeout}`)
+
     this._reconnectWait = options.reconnectWait || 5000
     _d(`reconnect wait set to ${this._reconnectWait}`)
+
     this._failless = (options.failless !== false)
     _d(`failless set to ${this._failless}`)
 
@@ -115,6 +117,7 @@ class Client extends ClientAbstract {
         this._awaitingHandshakeResponse = true
         return this._handleServerHandshake(data)
       } else {
+        this._awaitingHandshakeResponse = false
         this._handshakeOver = true
         return this._handleHandshakeResponse(data)
       }
@@ -382,7 +385,6 @@ class Client extends ClientAbstract {
     this._d('reconnecting')
     this._socketeerClosing = false
     this._handshakeOver = false
-    this._awaitingHandshakeResponse = false
     this._willReconnect = false
     this._isReconnection = true
     this._createWebsocket()
