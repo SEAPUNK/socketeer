@@ -12,6 +12,8 @@
 * Fixed prevention of false-positive heartbeat timeouts, and fixed the cleanup of heartbeat timeouts
 * Fixed the starting of the heartbeat timeout on client ready
 * Created documentation for extending ClientAbstract
+* Fixed session resuming
+* Fixed handling of action handlers
 
 0.8.0
 ===

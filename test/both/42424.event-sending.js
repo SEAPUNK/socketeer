@@ -1,15 +1,15 @@
 import test from 'ava'
 import {Server, Client} from '../../'
 
+const PORT = 42424
+
 test('server and client should correctly send and receive events', (t) => {
   t.plan(4)
   return new Promise((resolve, reject) => {
-    const server = new Server({
-      supportsResuming: true
-    })
+    const server = new Server()
     let client
     server.on('error', (err) => reject(new Error('Server errored out: ' + err)))
-    server.listen(42424).then(() => {
+    server.listen(PORT).then(() => {
       server.on('connection', (sclient) => {
         sclient.on('error', (err) => reject(new Error('Server client errored out: ' + err)))
         sclient.emit('hello', 'yes')
@@ -18,7 +18,7 @@ test('server and client should correctly send and receive events', (t) => {
           resolve()
         })
       })
-      client = new Client('ws://127.0.0.1:42424/')
+      client = new Client(`ws://127.0.0.1:${PORT}/`)
       client.on('error', (err) => reject(new Error('Client errored out: ' + err)))
       client.on('close', () => reject(new Error('Connection was closed.')))
       let isOpen = false

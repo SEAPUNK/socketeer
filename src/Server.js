@@ -17,16 +17,22 @@ class Server extends EventEmitter {
     if (!options) options = {}
 
     const _d = this._d = debug('socketeer:Server')
+
     this._heartbeatTimeout = options.heartbeatTimeout || 15000
     _d(`heartbeat timeout set to ${this._heartbeatTimeout}`)
+
     this._heartbeatInterval = options.heartbeatInterval || 10000
     _d(`heartbeat interval set to ${this._heartbeatInterval}`)
+
     this._failless = (options.failless !== false)
     _d(`failless set to ${this._failless}`)
+
     this.supportsResuming = !!options.supportsResuming
     _d(`session resume support set to ${this.supportsResuming}`)
+
     this._sessionTimeout = options.sessionTimeout || 10000
     _d(`session resume timeout set to ${this._sessionTimeout}`)
+
     this._middlewares = []
 
     if (this._failless) {
@@ -137,7 +143,7 @@ class Server extends EventEmitter {
       this.emit('connectionSetupError', err)
     }
 
-    const handleSessionResume = (newResumeToken) => {
+    const handleSessionResume = (newResumeToken, existingClient) => {
       this._d(`handling session resume w/ token: ${newResumeToken}`)
       if (!newResumeToken) {
         // Session resume failed.
@@ -146,8 +152,8 @@ class Server extends EventEmitter {
         })
       } else {
         // Session resume succeeded.
-        // TODO: Get the client that had that session
-        // client._replaceSocket()
+        client._implode()
+        existingClient._replaceSocket(connection, newResumeToken)
       }
     }
 
@@ -207,8 +213,9 @@ class Server extends EventEmitter {
       this._d('handshake resolved')
       const isResume = obj.isResume
       const newResumeToken = obj.newResumeToken
+      const existingClient = obj.existingClient
       if (isResume) {
-        handleSessionResume(newResumeToken)
+        handleSessionResume(newResumeToken, existingClient)
       } else {
         handleNewSession(newResumeToken)
       }

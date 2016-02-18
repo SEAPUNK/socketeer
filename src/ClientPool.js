@@ -114,10 +114,10 @@ class ClientPool {
     return new Promise((resolve, reject) => {
       this._d('attempting session resume')
       const session = this.sessionPool.get(token)
-      if (!session) return resolve(null)
-      if (session.active) return resolve(null)
+      if (!session) return resolve({newToken: null})
+      if (session.active) return resolve({newToken: null})
       // TODO: Issue #22
-      if (ip !== session.ip) return resolve(null)
+      if (ip !== session.ip) return resolve({newToken: null})
       // Otherwise, we can re-mark as active, and set it to a new token.
       this._d('session resume seems OK, generating new token')
       // This to ensure the timeout does not run, and if it did,
@@ -131,12 +131,15 @@ class ClientPool {
         if (!newToken) throw new Error('no token was generated during session resume attempt')
         // Race condition: If there are multiple connections trying to resume the same
         // inactive session, the session that got a new token first wins the session.
-        if (!session.active) return resolve(null)
+        if (session.active) return resolve({newToken: null})
         session.active = true // This is just to let other session resume attempts
                               // know that the session is no longer available.
         this.createSession(newToken, session.client, ip)
         this.deleteSession(token)
-        resolve(token)
+        resolve({
+          newToken: newToken,
+          existingClient: session.client
+        })
       }).catch((err) => {
         if (session.timeoutCalled) {
           this.cleanSession(token, session)

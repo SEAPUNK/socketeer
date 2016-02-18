@@ -234,7 +234,7 @@ class ClientAbstract extends EventEmitter {
     }
 
     // Make sure handlerPromise is actually a promise.
-    if (typeof handlerPromise.then !== 'function' || typeof handlerPromise.catch !== 'function') {
+    if (!handlerPromise || typeof handlerPromise.then !== 'function' || typeof handlerPromise.catch !== 'function') {
       this._da('action handler for action ' + data.a + ' does not return a promise')
       this.send({
         i: data.i,
