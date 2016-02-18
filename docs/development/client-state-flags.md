@@ -28,36 +28,6 @@ Development reference: Used to explain which variable is which, and what it's us
     - `true` when:
         + Client created a new connection to the server after the first connection close
 
-`_handshakeOver`
----
-
-**TODO**: Replace with `_handshakeStep`
-
-* **Default**: `false`
-* **What**: Indicates whether any further handshake messages should be rejected with an error
-* **Used for**: Rejecting further handshake messages (flow control)
-* **Conditions**:
-    - `false` when:
-        + Client is first created
-        + Client reconnects to the server
-    - `true` when:
-        + The last handshake message from the server has been received
-
-`_awaitingHandshakeResponse`
----
-
-**TODO**: Replace with `_handshakeStep`
-
-* **Default**: `false`
-* **What**: Indicates whether the next handshake message should be the second server handshake message or not.
-* **Used for**: Flow control.
-* **Conditions**:
-    - `false` when:
-        + Client is first created
-        + The second handshake message from the server has been received
-    - `true` when:
-        + The first handshake message from the server has been received
-
 `_resumePromiseResolve`
 ---
 
@@ -84,3 +54,19 @@ Development reference: Used to explain which variable is which, and what it's us
         + We attempt to reconnect to the server with a new session
     - The session resume token when:
         + Server gives us a new session resume token to use via either successful session resumal or new session with the server supporting session resumals
+
+`_handshakeStep`
+---
+
+* **Default**: `0`
+* **What**: Indicates what step of the handshake we are currently at.
+* **Used for**: Knowing which handshake message should be which, and whether we should accept any further handshake messages.
+* **Note**: Further handshake messages will be rejected when the step is `2`.
+* **Conditions**:
+    - `0` when:
+        + Client is first created
+        + Client reconnects to the server
+    - `1` when:
+        + First handshake message from the server has been received
+    - `2` when:
+        + Second handshake message from the server has been received

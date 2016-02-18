@@ -29,8 +29,7 @@ class Client extends ClientAbstract {
 
     this._isReady = false
     this._isReconnection = false
-    this._handshakeOver = false
-    this._awaitingHandshakeResponse = false
+    this._handshakeStep = 0
     this._resumePromiseResolve = null
     this._resumeToken = null
 
@@ -109,17 +108,18 @@ class Client extends ClientAbstract {
 
     _d('handling message')
     if (!this._isReady) {
-      if (this._handshakeOver) {
-        return this._handleError('server sent unexpected handshake message, although we are done listening')
-      }
       _d('client not ready, handling handshake messages')
-      if (!this._awaitingHandshakeResponse) {
-        this._awaitingHandshakeResponse = true
-        return this._handleServerHandshake(data)
-      } else {
-        this._awaitingHandshakeResponse = false
-        this._handshakeOver = true
-        return this._handleHandshakeResponse(data)
+      switch (this._handshakeStep) {
+        case 0:
+          this._handshakeStep = 1
+          return this._handleServerHandshake(data)
+        case 1:
+          this._handshakeStep = 2
+          return this._handleHandshakeResponse(data)
+        case 2:
+          return this._handleError('server sent unexpected handshake message, although we are done listening')
+        default:
+          return this._handleError(`[internal] unknown handshake step: ${this._handshakeStep}`)
       }
     } else {
       if (data === 'h') {
@@ -383,7 +383,7 @@ class Client extends ClientAbstract {
   _doReconnect () {
     this._d('reconnecting')
     this._socketeerClosing = false
-    this._handshakeOver = false
+    this._handshakeStep = 0
     this._willReconnect = false
     this._isReconnection = true
     this._createWebsocket()
