@@ -58,3 +58,25 @@ It is the inheriting class's responsibility to set this variable to `true` when 
         + The inheriting class sets it to `true`.
             * In `Client`, when the client creates a new WebSocket instance (to reconnect to the server)
             * In `ServerClient`, when the websocket has been replaced due to successful session resume attempt
+
+Handled state
+===
+
+ClientAbstract also handles state that it does not introduce.
+
+`_resumePromiseResolve`
+---
+
+*(introduced in Client)*
+
+If it exists, it modifies the behavior of `_handleError()` and `_handleClose()`:
+
+* In `_handleError()`, it suppresses the emittance of the `error` event.
+* In `_handleError()`, it suppresses the emittance of the `close` event, and calls `_resolveSessionResume(false)` (that is part of Client)
+
+`_closeIsPause`
+---
+
+*(introduced in ServerClient)*
+
+If it is `true`, then it modifies the behavior of `_handleClose()`: Instead of emitting the `close` event, it emits the `pause` event with the same arguments.
