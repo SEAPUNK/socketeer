@@ -167,10 +167,10 @@ class ClientAbstract extends EventEmitter {
       // This means we are a Client, and we attempted a session resume.
       // We *should* have this function.
       this._resolveSessionResume(false)
+    } else {
+      const eventName = (this._closeIsPause) ? 'pause' : 'close'
+      this._emit(eventName, code, message, error)
     }
-
-    const eventName = (this._closeIsPause) ? 'pause' : 'close'
-    this._emit(eventName, code, message, error)
   }
 
   _processQueue (msg, done) {
