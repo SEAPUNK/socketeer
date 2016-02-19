@@ -15,4 +15,4 @@ socketeer: yet another websocket framework
 
 - [usage](docs/usage.md)
 - [documentation](docs/api/index.md)
-- [protocol](docs/protocol/v1.md)
+- [protocol](docs/protocol/)
