@@ -2,6 +2,8 @@
 ===
 
 * Fixed docs/usage.md
+* Fixed ClientPool session cleanup function
+* Fixed ServerClient client close cleanup
 
 0.8.1
 ===

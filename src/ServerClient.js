@@ -178,9 +178,9 @@ class ServerClient extends ClientAbstract {
   }
 
   _destroySession () {
-    this.server.room.removeAll(this)
+    this.server.room.removeFromAll(this)
     this.server.room._leaveAll(this)
-    this.pool.remove(this.id)
+    this.server.pool.remove(this.id)
     this._emit('close')
   }
 
@@ -200,9 +200,9 @@ class ServerClient extends ClientAbstract {
     if (this.server.supportsResuming) {
       this.server.pool.deactivateSession(this._sessionToken)
     } else {
-      this.server.room.removeAll(this)
+      this.server.room.removeFromAll(this)
       this.server.room._leaveAll(this)
-      this.pool.remove(this.id)
+      this.server.pool.remove(this.id)
     }
 
     super._handleClose(closeEvent)

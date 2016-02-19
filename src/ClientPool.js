@@ -68,7 +68,7 @@ class ClientPool {
   cleanSession (token, session) {
     this._d(`cleaning session: ${token}`)
     this.deleteSession(token)
-    this.session.client._destroySession()
+    session.client._destroySession()
   }
 
   deactivateSession (token) {
