@@ -1,7 +1,7 @@
 0.8.2
 ===
 
-
+* Fixed docs/usage.md
 
 0.8.1
 ===
