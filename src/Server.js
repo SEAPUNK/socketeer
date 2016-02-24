@@ -75,8 +75,7 @@ class Server extends EventEmitter {
         opts.port = port
       }
       opts.disableHixie = true
-      // TODO: Should we allow perMessageDeflate to be configurable?
-      opts.perMessageDeflate = false
+      opts.perMessageDeflate = opts.perMessageDeflate || false
       this.wss = new ws.Server(opts, (err) => {
         if (err) return reject(err)
         resolve()
