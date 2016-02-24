@@ -4,6 +4,7 @@
 * Fixed docs/usage.md
 * Fixed ClientPool session cleanup function
 * Fixed ServerClient client close cleanup
+* Added option to Server: `resumeAllowsDifferentIPs`, which allows session resuming from a different IP.
 
 0.8.1
 ===

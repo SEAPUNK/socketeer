@@ -116,8 +116,7 @@ class ClientPool {
       const session = this.sessionPool.get(token)
       if (!session) return resolve({newToken: null})
       if (session.active) return resolve({newToken: null})
-      // TODO: Issue #22
-      if (ip !== session.ip) return resolve({newToken: null})
+      if (!this.server.resumeAllowsDifferentIPs && ip !== session.ip) return resolve({newToken: null})
       // Otherwise, we can re-mark as active, and set it to a new token.
       this._d('session resume seems OK, generating new token')
       // This to ensure the timeout does not run, and if it did,

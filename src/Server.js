@@ -30,6 +30,9 @@ class Server extends EventEmitter {
     this.supportsResuming = !!options.supportsResuming
     _d(`session resume support set to ${this.supportsResuming}`)
 
+    this.resumeAllowsDifferentIPs = !!options.resumeAllowsDifferentIPs
+    _d(`session resume different IP support set to ${this.resumeAllowsDifferentIPs}`)
+
     this._sessionTimeout = options.sessionTimeout || 10000
     _d(`session resume timeout set to ${this._sessionTimeout}`)
 
