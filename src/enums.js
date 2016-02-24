@@ -5,3 +5,5 @@ exports.ActionResponse = {
   NONEXISTENT: 1,
   ERROR: 2
 }
+
+exports.PROTOCOL_VERSION = 2

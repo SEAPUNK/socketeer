@@ -6,6 +6,9 @@
 * Fixed ServerClient client close cleanup
 * Added option to Server: `resumeAllowsDifferentIPs`, which allows session resuming from a different IP.
 * Allowed `perMessageDeflate` to be configured in `Server.listen` (defaults to `false`)
+* New class: ClientPreparer
+* New file: util.js, which contains the session resume token validation function
+* Protocol version is now stored under enums.js
 
 0.8.1
 ===

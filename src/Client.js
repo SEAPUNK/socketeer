@@ -10,26 +10,19 @@ class Client extends ClientAbstract {
   constructor (address, options) {
     super()
 
-    if (!options) options = {}
     const _d = this._d = debug('socketeer:Client')
 
+    if (!options) options = {}
     this._wsConstructArgs = [address, options.protocols, options.ws]
-
     this._heartbeatTimeout = options.heartbeatTimeout || 15000
-    _d(`heartbeat timeout set to ${this._heartbeatTimeout}`)
-
     this._handshakeTimeout = options.handshakeTimeout || 10000
-    _d(`handshake timeout set to ${this._handshakeTimeout}`)
-
     this._reconnectWait = options.reconnectWait || 5000
-    _d(`reconnect wait set to ${this._reconnectWait}`)
-
     this._failless = (options.failless !== false)
-    _d(`failless set to ${this._failless}`)
 
     this._isReady = false
     this._isReconnection = false
     this._handshakeStep = 0
+
     this._resumePromiseResolve = null
     this._resumeToken = null
     this._handshakeTimer = null
