@@ -64,16 +64,6 @@ Handled state
 
 ClientAbstract also handles state that it does not introduce.
 
-`_resumePromiseResolve`
----
-
-*(introduced in Client)*
-
-If it exists, it modifies the behavior of `_handleError()` and `_handleClose()`:
-
-* In `_handleError()`, it suppresses the emittance of the `error` event.
-* In `_handleError()`, it suppresses the emittance of the `close` event, and calls `_resolveSessionResume(false)` (that is part of Client)
-
 `_closeIsPause`
 ---
 

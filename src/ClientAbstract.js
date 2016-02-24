@@ -122,11 +122,7 @@ class ClientAbstract extends EventEmitter {
       this._da('socketeer is closing, ignoring _handleError')
       return
     }
-    // If we are doing a session resume,
-    // we do *not* want to emit an error event.
-    if (!this._resumePromiseResolve) {
-      this._emit('error', err, true)
-    }
+    this._emit('error', err, true)
     this._closeMustHaveError = true
     this.close()
     this._da('error handling: handling close')
@@ -163,14 +159,8 @@ class ClientAbstract extends EventEmitter {
     this._da('close message: ' + message)
     this._da('close error: ' + maybestack(error))
     this._detachEvents()
-    if (this._resumePromiseResolve) {
-      // This means we are a Client, and we attempted a session resume.
-      // We *should* have this function.
-      this._resolveSessionResume(false)
-    } else {
-      const eventName = (this._closeIsPause) ? 'pause' : 'close'
-      this._emit(eventName, code, message, error)
-    }
+    const eventName = (this._closeIsPause) ? 'pause' : 'close'
+    this._emit(eventName, code, message, error)
   }
 
   _processQueue (msg, done) {
