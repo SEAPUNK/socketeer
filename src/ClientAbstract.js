@@ -4,9 +4,9 @@ const EventEmitter = require('events').EventEmitter
 const maybestack = require('maybestack')
 const exists = require('deep-exists')
 const MessageQueue = require('./MessageQueue')
-const ActionResponse = require('./enums').ActionResponse
-
-const PROTOCOL_VERSION = 2
+const enums = require('./enums')
+const ActionResponse = enums.ActionResponse
+const PROTOCOL_VERSION = enums.PROTOCOL_VERSION
 
 class ClientAbstract extends EventEmitter {
   constructor () {
