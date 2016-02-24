@@ -31,7 +31,7 @@ class ClientPreparer {
 
   createSocket () {
     this._d('creating websocket')
-    this.ws = WebSocket.apply(null, this.wsArgs)
+    this.ws = this.returnValue.ws = WebSocket.apply(null, this.wsArgs)
     this.ws.onopen = () => this.handleOpen()
     this.ws.onmessage = (messageEvent) => this.handleMessage(messageEvent)
     this.ws.onerror = (err) => this.handleError(err)
@@ -45,6 +45,7 @@ class ClientPreparer {
   }
 
   handleError (err) {
+    this._d('handling error (unfiltered)')
     if (this.prepared) return
     this._d('handling error')
     this.prepared = true
@@ -54,6 +55,7 @@ class ClientPreparer {
   }
 
   handleClose () {
+    this._d('handling close (unfiltered)')
     if (this.prepared) return
     this._d('handling close')
     this.prepared = true
@@ -63,6 +65,7 @@ class ClientPreparer {
 
   handleMessage (messageEvent) {
     // TODO: Is there a chance this could be fired after we resolve the handshake?
+    this._d('handling message (unfiltered)')
     if (this.prepared) return
     this._d('handling message')
     const data = messageEvent.data
@@ -251,7 +254,7 @@ class ClientPreparer {
   finishPreparation () {
     this._d('finishing preparation')
     this.prepared = true
-    if (!this.isResume && !this.resumeOk) this.ws.close()
+    if (this.isResume && !this.resumeOk) this.ws.close()
     this.resolve(this.returnValue)
   }
 

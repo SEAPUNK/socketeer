@@ -45,7 +45,7 @@ class Client extends ClientAbstract {
 
     const preparer = new ClientPreparer(wsArgs, handshakeTimeout, token)
     preparer.openHandler = () => {
-      this.emit('unreadyOpen', this._isReconnection)
+      this._emit('unreadyOpen', this._isReconnection)
     }
     preparer.promise.then((retval) => {
       const ws = retval.ws
