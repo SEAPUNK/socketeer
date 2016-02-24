@@ -149,6 +149,7 @@ class ClientAbstract extends EventEmitter {
     // This is in the case the websocket emits the 'close' event
     //  before we get the chance to call the _handleClose
     //  in the _handleError function.
+    // TODO: Is this really necessary?
     if (!error && this._closeMustHaveError) {
       this._da('ignoring close message because it does not have error, but it was specified that it should')
       return
@@ -349,20 +350,6 @@ class ClientAbstract extends EventEmitter {
   _generateActionId () {
     this._da(`generated action id: ${this._currentActionId}`)
     return this._currentActionId++
-  }
-
-  _validateSessionResumeToken (token) {
-    // Note: If the session resume token does have a : in it during the handshake,
-    // then it will cause session resuming to silently fail.
-    if (
-      typeof token !== 'string' ||
-      token.length < 5 ||
-      token.length > 200 ||
-      token.indexOf(':') !== -1
-    ) {
-      return false
-    }
-    return true
   }
 
   isOpening () {

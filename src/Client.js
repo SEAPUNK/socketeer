@@ -100,16 +100,14 @@ class Client extends ClientAbstract {
 
   _handleMessage (messageEvent) {
     let data = messageEvent.data
-    const _d = this._d
     // TODO: Issue #37
     if (!this.isOpen()) {
-      _d('message handler ignored due to closed socket')
+      this._d('message handler ignored due to closed socket')
       return
     }
 
-    _d('handling message')
+    this._d('handling message')
     if (data === 'h') {
-      _d('message is heartbeat')
       this._handleHeartbeat()
       return
     } else {

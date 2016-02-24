@@ -2,6 +2,7 @@
 
 const debug = require('debug')
 const ClientAbstract = require('./ClientAbstract')
+const validateSessionResumeToken = require('./util').validateSessionResumeToken
 
 class ServerClient extends ClientAbstract {
   constructor (ws, server) {
@@ -118,7 +119,7 @@ class ServerClient extends ClientAbstract {
 
   _attemptSessionResume (token) {
     this._d('attempting session resume')
-    if (!this._validateSessionResumeToken(token)) {
+    if (!validateSessionResumeToken(token)) {
       return this._handleError(new Error('client sent invalid session resume token'))
     }
     this.server.pool.attemptResume(token, this.ip).then((obj) => {
