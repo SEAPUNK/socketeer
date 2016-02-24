@@ -9,6 +9,9 @@
 * New class: ClientPreparer
 * New file: util.js, which contains the session resume token validation function
 * Protocol version is now stored under enums.js
+* Moved session management into its own class: SessionManager
+* New class: ServerClientPreparer
+* Added handshake timeout to server
 
 0.8.1
 ===

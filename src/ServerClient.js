@@ -2,15 +2,18 @@
 
 const debug = require('debug')
 const ClientAbstract = require('./ClientAbstract')
-const validateSessionResumeToken = require('./util').validateSessionResumeToken
 
 class ServerClient extends ClientAbstract {
-  constructor (ws, server) {
+  constructor (ws, resumeToken, id, ip, heartbeatInterval, server) {
     super()
     this._d = debug('socketeer:ServerClient')
 
     this.server = server
-    this.id = this.server.pool.generateId()
+    this.id = id
+    this._heartbeatInterval = heartbeatInterval
+    this.ws = ws
+    this.ip = ip
+    this._sessionToken = resumeToken
 
     // ClientAbstract will not emit the 'close' event with this set to true,
     // but instead, emit the 'pause' event.
@@ -18,22 +21,12 @@ class ServerClient extends ClientAbstract {
     // The 'pause' event will be emitted to indicate the session is no longer
     // connected, but the session reconnect timeout will
     // emit the real 'close' event.
-    this._closeIsPause = this.server.supportsResuming
+    this._closeIsPause = server.supportsResuming
 
     this._isReady = false
-    this._handshakeOver = false
-    this._handshakeFinished = false
-    this._sessionToken = null
 
-    this.ws = ws
-    this.ip = ws._socket.remoteAddress
     this._d(`new ServerClient from IP address: ${this.ip}`)
-    this._handshakePromise = new Promise((resolve, reject) => {
-      this._handshakeResolve = resolve
-      this._handshakeReject = reject
-    })
     this._attachEvents()
-    this._beginHandshake()
   }
 
   join (name) {
@@ -44,11 +37,9 @@ class ServerClient extends ClientAbstract {
     return this.server.room.leave(name, this)
   }
 
-  _beginHandshake () {
-    this.ws.send(`socketeer:v${this.PROTOCOL_VERSION}:i${this.server._heartbeatInterval}`)
-  }
-
   _handleMessage (messageEvent) {
+    if (!this.isReady) return this.handleError(new Error('Client sent extraneous message during handshake.'))
+
     let data = messageEvent.data
     const _d = this._d
     if (!this.isOpen()) {
@@ -57,84 +48,26 @@ class ServerClient extends ClientAbstract {
     }
 
     _d('handling message')
-    if (!this._isReady) {
-      if (this._handshakeOver) {
-        return this._handleError(new Error('client sent an extraneous message during handshake'))
-      }
-      this._handshakeOver = true
-      this._handleHandshakeMessage(data)
+    if (data === 'h') {
+      this._handleHeartbeat()
     } else {
-      if (data === 'h') {
-        this._handleHeartbeat()
-      } else {
-        super._handleMessage(messageEvent)
-      }
+      super._handleMessage(messageEvent)
     }
   }
 
-  _handleHandshakeMessage (data) {
-    const _d = this._d
-    _d('handling client handshake message')
-    if (typeof data !== 'string') {
-      return this._handleError(new Error('bad handshake message from client'))
-    }
-    const parts = data.split(':')
-    // There is only one part to the client handshake message right now:
-    //  The session resume attempt/token query.
-    if (
-      parts[0].indexOf('r') !== 0
-    ) {
-      return this._handleError(new Error('client sent unexpected handshake message'))
-    }
+  _handleClose (closeEvent) {
+    if (!this._isReady) return this.server.pool.unreserveId(this.id)
 
-    // Determine whether it's a query or a resume attempt.
-    if (
-      parts[0].indexOf('?') === 1
-    ) {
-      // It is a query.
-      this._querySessionResume()
-    } else if (
-      parts[0].indexOf('@') === 1
-    ) {
-      // It is a session resume attempt.
-      this._attemptSessionResume(parts[0].replace(/^r\@/, ''))
+    this._stopHeartbeat()
+    if (this.server.supportsResuming) {
+      this.server.sessionManager.deactivateSession(this._sessionToken)
     } else {
-      return this._handleError(new Error('client sent badly formatted session resume message'))
+      this.server.room.removeFromAll(this)
+      this.server.room._leaveAll(this)
+      this.server.pool.remove(this.id)
     }
-  }
 
-  _querySessionResume () {
-    this._d('running session resume token query')
-    this.server.pool.reserveNewToken().then((token) => {
-      if (!this.isOpen()) return
-      this._handshakeFinished = true
-      this._handshakeResolve({
-        isResume: false,
-        newResumeToken: token
-      })
-    }).catch((err) => {
-      this._handleError(err)
-    })
-  }
-
-  _attemptSessionResume (token) {
-    this._d('attempting session resume')
-    if (!validateSessionResumeToken(token)) {
-      return this._handleError(new Error('client sent invalid session resume token'))
-    }
-    this.server.pool.attemptResume(token, this.ip).then((obj) => {
-      if (!this.isOpen()) return
-      const newToken = obj.newToken
-      const existingClient = obj.existingClient
-      this._handshakeFinished = true
-      this._handshakeResolve({
-        isResume: true,
-        newResumeToken: newToken,
-        existingClient: existingClient
-      })
-    }).catch((err) => {
-      this._handleError(err)
-    })
+    super._handleClose(closeEvent)
   }
 
   _startHeartbeat () {
@@ -147,7 +80,7 @@ class ServerClient extends ClientAbstract {
         this._d('heartbeat timeout called')
         this._handleError(new Error('heartbeat timeout'))
       }, this.server._heartbeatTimeout)
-    }, this.server._heartbeatInterval)
+    }, this._heartbeatInterval)
   }
 
   _stopHeartbeat () {
@@ -162,74 +95,45 @@ class ServerClient extends ClientAbstract {
     this._startHeartbeat()
   }
 
-  _register (newToken) {
-    // Registers the client to the server.
-    // This is not called during a session resume attempt.
-    // This function is called ONLY from the server.
-
-    this._isReady = true
-    this._startHeartbeat()
-    this._sessionToken = newToken
-    this.server.pool.createSession(newToken, this, this.ip)
-    this.server.pool.add(this, this.id)
-    this.server.room._joinAll(this)
-    this.ws.send(`ok:${(newToken) ? 'y' : 'n'}:${newToken || ''}`)
-    this._resumeMessageQueue()
-    this.server.emit('connection', this)
-  }
-
   _destroySession () {
+    // This function is only called from the session manager.
     this.server.room.removeFromAll(this)
     this.server.room._leaveAll(this)
     this.server.pool.remove(this.id)
     this._emit('close')
   }
 
-  _handleClose (closeEvent) {
-    if (!this._handshakeFinished) {
-      this.server.pool.unreserveId(this.id)
-      this._handshakeReject(closeEvent.error || new Error('client closed prematurely'))
-      return super._handleClose(closeEvent)
+  _register () {
+    // Registers the client to the server.
+    // This is not called during a session resume attempt.
+    // This function is called ONLY from the server.
+    this._isReady = true
+    this._startHeartbeat()
+    if (this._sessionToken) {
+      this.server.sessionManager.createSession(this._sessionToken, this, this.ip)
     }
-
-    if (!this._isReady) {
-      this.server.pool.unreserveId(this.id)
-      return super._handleClose(closeEvent)
-    }
-
-    this._stopHeartbeat()
-    if (this.server.supportsResuming) {
-      this.server.pool.deactivateSession(this._sessionToken)
-    } else {
-      this.server.room.removeFromAll(this)
-      this.server.room._leaveAll(this)
-      this.server.pool.remove(this.id)
-    }
-
-    super._handleClose(closeEvent)
+    this.server.pool.add(this, this.id)
+    this.server.room._joinAll(this)
+    this.ws.send(`ok:${(this._sessionToken) ? 'y' : 'n'}:${this._sessionToken || ''}`)
+    this._resumeMessageQueue()
+    this.server.emit('connection', this)
   }
 
-  _replaceSocket (ws, newToken) {
+  _replaceSocket (ws, newToken, ip, heartbeatInterval) {
     this._d(`hot-swapping websockets for ServerClient id ${this.id} @ ip ${this.ip}`)
     this._socketeerClosing = false
     this.ws = ws
     const oldIp = this.ip
-    this.ip = ws._socket.remoteAddress
+    this.ip = ip
+    this.server.sessionManager.unreserveToken(newToken)
     this._sessionToken = newToken
+    this._heartbeatInterval = heartbeatInterval
     this._d(`hot-swapped websocket's IP address: ${this.ip}`)
     this._attachEvents()
     this.ws.send(`ok:+:${newToken}`)
     this._startHeartbeat()
     this._resumeMessageQueue()
     this._emit('resume', this.ip, oldIp)
-  }
-
-  _implode () {
-    this.ws.removeAllListeners('close')
-    this.ws.removeAllListeners('error')
-    this.ws.removeAllListeners('message')
-    this.ws.removeAllListeners('open')
-    delete this.ws
   }
 }
 

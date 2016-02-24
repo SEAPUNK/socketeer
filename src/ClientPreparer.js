@@ -254,7 +254,7 @@ class ClientPreparer {
   finishPreparation () {
     this._d('finishing preparation')
     this.prepared = true
-    if (this.isResume && !this.resumeOk) this.ws.close()
+    if (this.returnValue.isResume && !this.returnValue.resumeOk) this.ws.close()
     this.resolve(this.returnValue)
   }
 

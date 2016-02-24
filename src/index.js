@@ -1,13 +1,20 @@
 'use strict'
 
-exports.Client = require('./Client')
 exports.ClientAbstract = require('./ClientAbstract')
-exports.ClientPool = require('./ClientPool')
 exports.MessageQueue = require('./MessageQueue')
-exports.Room = require('./Room')
-exports.RoomManager = require('./RoomManager')
-exports.Server = require('./Server')
+
+exports.Client = require('./Client')
+exports.ClientPreparer = require('./ClientPreparer')
+
 exports.ServerClient = require('./ServerClient')
+exports.ServerClientPreparer = require('./ServerClientPreparer')
+
+exports.Server = require('./Server')
+exports.ClientPool = require('./ClientPool')
+exports.SessionManager = require('./SessionManager')
+
+exports.RoomManager = require('./RoomManager')
+exports.Room = require('./Room')
+
 exports.enums = require('./enums')
 exports.util = require('./util')
-exports.ClientPreparer = require('./ClientPreparer')
