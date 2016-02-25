@@ -13,6 +13,8 @@ test('server should not accept an already used session resume token', (t) => {
 
     await server.listen(PORT)
 
+    server.on('error', (err) => reject(new Error('Server errored out: ' + err)))
+    server.on('connectionSetupError', reject)
     server.on('connection', (sclient) => {
       sclient.action('store', async function (thing) {
         sclient.data.thing = thing

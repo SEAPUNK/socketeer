@@ -137,7 +137,7 @@ class Server extends EventEmitter {
         this.pool.unreserveId(id)
       }
       if (isResume && !resumeToken) return
-      if (isResume) return existingClient.replaceSocket(ws, resumeToken, ip, heartbeatInterval)
+      if (isResume) return existingClient._replaceSocket(ws, resumeToken, ip, heartbeatInterval)
 
       client = new ServerClient(ws, resumeToken, id, ip, heartbeatInterval, this)
       client.on('error', () => {})
@@ -197,7 +197,7 @@ class Server extends EventEmitter {
 
         if (this._failless) {
           this._d('[failless] adding server client error handler')
-          preparer.on('error', (err) => {
+          client.on('error', (err) => {
             this._d(`[failless] handling server client error: ${maybestack(err)}`)
           })
         }

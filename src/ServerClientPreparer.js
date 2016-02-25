@@ -140,7 +140,7 @@ class ServerClientPreparer {
     }
     this.server.sessionManager.attemptResume(token, this.ip).then((retval) => {
       this.returnValue.isResume = true
-      this.returnValue.resumeToken = retval.resumeToken
+      this.returnValue.resumeToken = retval.newToken
       this.returnValue.existingClient = retval.existingClient
       this.finishPreparation()
     }).catch((err) => {

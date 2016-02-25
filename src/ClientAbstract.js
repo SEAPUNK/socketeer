@@ -17,7 +17,8 @@ class ClientAbstract extends EventEmitter {
     if (!this._d) this._d = () => {}
     this._da = (msg) => this._d(`[abstract] ${msg}`)
 
-    this._events = new Map()
+    // We can't have _events, because it's an EventEmitter private property.
+    this._sEvents = new Map()
     this._actions = new Map()
     this._actionPromises = new Map()
     this._currentActionId = 0
@@ -295,7 +296,7 @@ class ClientAbstract extends EventEmitter {
 
   _handleEvent (data) {
     this._da(`handling event: ${data.e}`)
-    const handlers = this._events.get(data.e)
+    const handlers = this._sEvents.get(data.e)
     if (!handlers || !handlers.length) return
     this._da(`handlers exist for event ${data.e}: there are ${handlers.length} handlers`)
     for (let handler of handlers) {
@@ -315,8 +316,8 @@ class ClientAbstract extends EventEmitter {
       throw new Error('event handler is not a function')
     }
     this._da(`defining event handler for ${name}`)
-    if (!this._events.get(name)) this._events.set(name, [])
-    this._events.get(name).push(handler)
+    if (!this._sEvents.get(name)) this._sEvents.set(name, [])
+    this._sEvents.get(name).push(handler)
   }
 
   action (name, handler, force) {

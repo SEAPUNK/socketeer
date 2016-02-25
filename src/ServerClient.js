@@ -38,7 +38,7 @@ class ServerClient extends ClientAbstract {
   }
 
   _handleMessage (messageEvent) {
-    if (!this.isReady) return this.handleError(new Error('Client sent extraneous message during handshake.'))
+    if (!this._isReady) return this._handleError(new Error('Client sent extraneous message during handshake.'))
 
     let data = messageEvent.data
     const _d = this._d

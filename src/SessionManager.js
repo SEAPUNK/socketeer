@@ -1,11 +1,12 @@
 'use strict'
 
-
+const debug = require('debug')
 const randomBytes = require('crypto').randomBytes
 const forever = require('async').forever
 
 class SessionManager {
   constructor (server) {
+    this._d = debug('socketeer:SessionManager')
     this.server = server
     this.sessions = new Map()
     this.reserved = new Set()
