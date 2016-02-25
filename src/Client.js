@@ -5,6 +5,7 @@ const maybestack = require('maybestack')
 const Promise = require('bluebird')
 const ClientAbstract = require('./ClientAbstract')
 const ClientPreparer = require('./ClientPreparer')
+const WebSocket = require('ws')
 
 class Client extends ClientAbstract {
   constructor (address, options) {
@@ -26,6 +27,10 @@ class Client extends ClientAbstract {
     this._resumeToken = null
     this._heartbeatTimer = null
     this._willReconnect = false
+
+    this.ws = {
+      readyState: WebSocket.CLOSED
+    }
 
     if (this._failless) {
       _d('[failless] adding client error handler')
