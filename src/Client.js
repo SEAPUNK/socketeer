@@ -75,7 +75,7 @@ class Client extends ClientAbstract {
     }).catch((err) => {
       // Do NOT emit the 'error' event if it's a session resume attempt.
       if (token) {
-        this._resolveSessionResume(false)
+        return this._resolveSessionResume(false)
       }
       // Else, we can emit the 'error' and 'close' events.
       this._emit('error', err, true)
