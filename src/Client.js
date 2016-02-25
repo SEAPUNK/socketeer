@@ -29,7 +29,8 @@ class Client extends ClientAbstract {
     this._willReconnect = false
 
     this.ws = {
-      readyState: WebSocket.CLOSED
+      readyState: WebSocket.CLOSED,
+      CLOSED: WebSocket.CLOSED
     }
 
     if (this._failless) {
