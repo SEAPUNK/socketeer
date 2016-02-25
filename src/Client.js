@@ -171,7 +171,7 @@ class Client extends ClientAbstract {
       throw new Error('client has not disconnected to reconnect yet')
     }
     // Prevent duplicate reconnection attempts.
-    if (!this._willReconnect) return
+    if (this._willReconnect) return
     this._willReconnect = true
     // Clear out the resume token because
     // we are not going to resume the session.
