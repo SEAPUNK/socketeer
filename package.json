@@ -37,7 +37,7 @@
   "homepage": "https://github.com/SEAPUNK/socketeer#readme",
   "dependencies": {
     "async": "^1.5.2",
-    "bluebird": "^3.3.1",
+    "bluebird": "^3.3.3",
     "debug": "^2.2.0",
     "deep-exists": "^1.0.1",
     "maybestack": "^2.0.0",
@@ -50,7 +50,7 @@
     "babel-cli": "^6.5.1",
     "babel-eslint": "^5.0.0",
     "babel-preset-es2015-node4": "^2.0.3",
-    "standard": "^6.0.5"
+    "standard": "^6.0.7"
   },
   "engines": {
     "node": ">= 4.0.0"
