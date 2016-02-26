@@ -42,13 +42,10 @@ class ServerClient extends ClientAbstract {
 
     let data = messageEvent.data
     const _d = this._d
-    if (!this.isOpen()) {
-      _d('message handler ignored due to closed socket')
-      return
-    }
 
     _d('handling message')
     if (data === 'h') {
+      if (!this.isOpen()) return
       this._handleHeartbeat()
     } else {
       super._handleMessage(messageEvent)
