@@ -12,6 +12,8 @@
 * Moved session management into its own class: SessionManager
 * New class: ServerClientPreparer
 * Added handshake timeout to server
+* Fixed calls to `reconnect()` and `resume()` in the case the websocket isn't fully closed
+* Introduced the function `willBeClosed()` to ClientAbstract that returns true if either `isClosed()` or `isClosing()` return true.
 
 0.8.1
 ===
