@@ -151,7 +151,7 @@ class Client extends ClientAbstract {
   resume () {
     return new Promise((resolve, reject) => {
       this._d('attempting session resume')
-      if (!this.isClosed()) {
+      if (!this.willBeClosed()) {
         this._d('has not closed, nothing to resume')
         return reject(new Error('client has not disconnected to resume session yet'))
       }
@@ -167,7 +167,7 @@ class Client extends ClientAbstract {
   }
 
   reconnect (immediate) {
-    if (!this.isClosed()) {
+    if (!this.willBeClosed()) {
       throw new Error('client has not disconnected to reconnect yet')
     }
     // Prevent duplicate reconnection attempts.
