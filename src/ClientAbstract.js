@@ -368,10 +368,6 @@ class ClientAbstract extends EventEmitter {
   isClosed () {
     return this.ws.readyState === this.ws.CLOSED
   }
-
-  willBeClosed () {
-    return this.isClosing() || this.isClosed()
-  }
 }
 
 module.exports = ClientAbstract
