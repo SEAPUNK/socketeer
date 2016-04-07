@@ -4,7 +4,7 @@ const EventEmitter = require('events').EventEmitter
 const debug = require('debug')
 const Promise = require('bluebird')
 const maybestack = require('maybestack')
-const ws = require('ws')
+const WebSocket = require('ws')
 const inspect = require('util').inspect
 const RoomManager = require('./RoomManager')
 const ClientPool = require('./ClientPool')
@@ -69,7 +69,7 @@ class Server extends EventEmitter {
       }
       opts.disableHixie = true
       opts.perMessageDeflate = opts.perMessageDeflate || false
-      this.wss = new ws.Server(opts, (err) => {
+      this.wss = new WebSocket.Server(opts, (err) => {
         if (err) return reject(err)
         resolve()
       })
