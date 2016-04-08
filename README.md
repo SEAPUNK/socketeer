@@ -9,10 +9,10 @@ socketeer: yet another websocket framework
 
 ---
 
-**Requires Node 4.x or newer**
+**requires Node 4.x or newer**
 
 `npm install socketeer`
 
 - [usage](docs/usage.md)
-- [documentation](docs/api/index.md)
+- [api](docs/api/)
 - [protocol](docs/protocol/)
