@@ -13,6 +13,17 @@
 * New class: ServerClientPreparer
 * Added handshake timeout to server
 * Fixed calls to `reconnect()` and `resume()` in the case the websocket isn't fully closed
+* Temporarily falling back to Mocha for testing instead of Ava ([#6](https://github.com/seapunk/socketeer/issues/6))
+* Bump dependencies and devDependencies:
+```
+ async                      ^1.5.2  →  ^2.0.0-rc.3
+ babel-eslint               ^5.0.0  →  ^6.0.2
+ bluebird                   ^3.3.3  →  ^3.3.4
+ babel-cli                  ^6.5.1  →  ^6.7.5
+ babel-preset-es2015-node4  ^2.0.3  →  ^2.1.0
+ standard                   ^6.0.7  →  ^6.0.8
+```
+
 
 0.8.1
 ===

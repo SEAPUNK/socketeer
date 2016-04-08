@@ -4,7 +4,7 @@
   "description": "yet another websocket framework",
   "main": "lib/index.js",
   "scripts": {
-    "test": "standard && ava",
+    "test": "standard && mocha",
     "build": "babel -d lib src",
     "prepublish": "npm run build",
     "buildtest": "npm run build && npm run test"
@@ -22,36 +22,36 @@
     "session",
     "resume"
   ],
-  "author": "ivan k <ivan@sq10.net>",
+  "author": "Ivan K <ivan@sq10.net>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/SEAPUNK/socketeer/issues"
   },
   "standard": {
     "ignore": [
-      "lib/old/",
+      "browser/",
       "lib/"
     ],
     "parser": "babel-eslint"
   },
   "homepage": "https://github.com/SEAPUNK/socketeer#readme",
   "dependencies": {
-    "async": "^1.5.2",
-    "bluebird": "^3.3.3",
+    "async": "^2.0.0-rc.3",
+    "bluebird": "^3.3.4",
     "debug": "^2.2.0",
     "deep-exists": "^1.0.1",
     "maybestack": "^2.0.0",
+    "utf-8-validate": "^1.2.1",
     "uuid": "^2.0.1",
-    "ws": "^1.0.1",
-    "utf-8-validate": "^1.2.1"
+    "ws": "^1.0.1"
   },
   "devDependencies": {
-    "ava": "^0.12.0",
-    "babel-cli": "^6.5.1",
-    "babel-eslint": "^5.0.0",
-    "babel-preset-es2015-node4": "^2.0.3",
+    "babel-cli": "^6.7.5",
+    "babel-eslint": "^6.0.2",
+    "babel-preset-es2015-node4": "^2.1.0",
     "babel-preset-stage-0": "^6.5.0",
-    "standard": "^6.0.7"
+    "mocha": "^2.4.5",
+    "standard": "^6.0.8"
   },
   "engines": {
     "node": ">= 4.0.0"
