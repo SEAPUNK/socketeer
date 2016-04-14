@@ -23,7 +23,7 @@
  babel-preset-es2015-node4  ^2.0.3  →  ^2.1.0
  standard                   ^6.0.7  →  ^6.0.8
 ```
-
+* Don't allow session resuming if `close()` or `terminate()` are called on the ServerClient end ([#45](https://github.com/seapunk/socketeer/issues/45))
 
 0.8.1
 ===
