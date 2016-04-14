@@ -13,6 +13,8 @@ test('server and client should correctly pause and resume a session 10 times in 
 
     await server.listen(PORT)
 
+    server.on('error', (err) => reject(new Error('Server errored out: ' + err)))
+    server.on('connectionSetupError', reject)
     server.on('connection', (sclient) => {
       sclient.action('store', async function (thing) {
         sclient.data.thing = thing

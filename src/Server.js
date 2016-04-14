@@ -4,11 +4,13 @@ const EventEmitter = require('events').EventEmitter
 const debug = require('debug')
 const Promise = require('bluebird')
 const maybestack = require('maybestack')
-const ws = require('ws')
+const WebSocket = require('ws')
 const inspect = require('util').inspect
 const RoomManager = require('./RoomManager')
 const ClientPool = require('./ClientPool')
 const ServerClient = require('./ServerClient')
+const ServerClientPreparer = require('./ServerClientPreparer')
+const SessionManager = require('./SessionManager')
 
 class Server extends EventEmitter {
   constructor (options) {
@@ -19,19 +21,12 @@ class Server extends EventEmitter {
     const _d = this._d = debug('socketeer:Server')
 
     this._heartbeatTimeout = options.heartbeatTimeout || 15000
-    _d(`heartbeat timeout set to ${this._heartbeatTimeout}`)
-
     this._heartbeatInterval = options.heartbeatInterval || 10000
-    _d(`heartbeat interval set to ${this._heartbeatInterval}`)
-
+    this._handshakeTimeout = options.handshakeTimeout || 10000
     this._failless = (options.failless !== false)
-    _d(`failless set to ${this._failless}`)
-
     this.supportsResuming = !!options.supportsResuming
-    _d(`session resume support set to ${this.supportsResuming}`)
-
+    this.resumeAllowsDifferentIPs = !!options.resumeAllowsDifferentIPs
     this._sessionTimeout = options.sessionTimeout || 10000
-    _d(`session resume timeout set to ${this._sessionTimeout}`)
 
     this._middlewares = []
 
@@ -42,8 +37,9 @@ class Server extends EventEmitter {
       })
     }
 
-    this.room = new RoomManager(this)
-    this.pool = new ClientPool(this)
+    this.room = new RoomManager()
+    this.pool = new ClientPool()
+    this.sessionManager = new SessionManager(this)
 
     // Reserved variable for anyone except the library to use.
     // Helps with not polluting the Socketeer instance namespace.
@@ -72,9 +68,8 @@ class Server extends EventEmitter {
         opts.port = port
       }
       opts.disableHixie = true
-      // TODO: Should we allow perMessageDeflate to be configurable?
-      opts.perMessageDeflate = false
-      this.wss = new ws.Server(opts, (err) => {
+      opts.perMessageDeflate = opts.perMessageDeflate || false
+      this.wss = new WebSocket.Server(opts, (err) => {
         if (err) return reject(err)
         resolve()
       })
@@ -125,79 +120,61 @@ class Server extends EventEmitter {
   }
 
   _handleConnection (connection) {
-    this._d('got connection, creating client')
-    const client = new ServerClient(connection, this)
+    this._d('got connection, preparing connection')
+    const preparer = new ServerClientPreparer(connection, this)
+    let client  // So handleNewSession and setupConnection
+                // know which client to use
 
-    let calledSetupErrorHandler = false
-    const setupErrorHandler = (err) => {
-      if (calledSetupErrorHandler) {
-        this._d(`warning: called setupErrorHandler more than twice: ${maybestack(err)}`)
-        return
+    preparer.promise.then((retval) => {
+      const id = retval.id
+      const ip = retval.ip
+      const ws = retval.ws
+      const heartbeatInterval = retval.heartbeatInterval
+      const isResume = retval.isResume
+      const resumeToken = retval.resumeToken
+      const existingClient = retval.existingClient
+      if (isResume) {
+        this.pool.unreserveId(id)
       }
-      this._d('called setup error handler')
-      calledSetupErrorHandler = true
-      client.removeAllListeners('error')
-      client.on('error', (err) => {
-        this._d(`error handler called on defunct connection: ${maybestack(err)}`)
-      })
-      this.emit('connectionSetupError', err)
-    }
+      if (isResume && !resumeToken) return
+      if (isResume) return existingClient._replaceSocket(ws, resumeToken, ip, heartbeatInterval)
 
-    const handleSessionResume = (newResumeToken, existingClient) => {
-      this._d(`handling session resume w/ token: ${newResumeToken}`)
-      if (!newResumeToken) {
-        // Session resume failed.
-        client.ws.send('ok:-:', () => {
-          client.close()
-        })
-      } else {
-        // Session resume succeeded.
-        client._implode()
-        existingClient._replaceSocket(connection, newResumeToken)
-      }
-    }
+      client = new ServerClient(ws, resumeToken, id, ip, heartbeatInterval, this)
+      client.on('error', () => {})
+      return handleNewSession()
+    }).catch((err) => {
+      this.pool.unreserveId(preparer.id)
+      setupErrorHandler(err)
+    })
 
-    const setupConnection = (newResumeToken) => {
-      this._d(`setting up connection w/ token: ${newResumeToken}`)
-      try {
-        client.removeAllListeners('error')
-        if (!client.isOpen()) {
-          this._d('server client closed before we could finish setup')
-          return setupErrorHandler(new Error('client closed before setup finish'))
-        }
-        if (this._failless) {
-          this._d('[failless] adding server client error handler')
-          client.on('error', (err) => {
-            this._d(`[failless] handling server client error: ${maybestack(err)}`)
-          })
-        }
-        client._register(newResumeToken)
-      } catch (err) {
-        this._d(`connection creation errored: ${maybestack(err)}`)
-        client.close()
-        return setupErrorHandler(err)
-      }
-    }
+    const handleNewSession = () => {
+      this._d(`handling new session w/ token: ${client._sessionToken}`)
 
-    const handleNewSession = (newResumeToken) => {
-      this._d(`handling new session w/ token: ${newResumeToken}`)
       ;(Promise.resolve().then(() => {
         if (this._middlewares.length) {
           this._d(`running ${this._middlewares.length} middleware on client`)
           return Promise.each(this._middlewares, (middleware, idx) => {
             this._d(`calling middleware #${idx + 1}`)
-            return middleware(client)
+            return middleware(client).then((allow) => {
+              if (!allow) return Promise.reject()
+              return Promise.resolve()
+            })
           })
         } else {
-          return Promise.resolve()
+          // Assure that the promise resolves asynchronously.
+          // This is to maintain consistency that handleNewSession
+          // is an async function
+          return (new Promise((resolve, reject) => setImmediate(resolve)))
         }
       }).then(() => {
-        setupConnection(newResumeToken)
+        setupConnection()
       }).catch((err) => {
         if (!client.isOpen()) {
           this._d('server client closed before we could finish setup')
-          return setupErrorHandler(new Error('client closed before setup finish'))
+          return setupErrorHandler(new Error('Connection closed before setup finish.'))
         }
+
+        // TODO: This can be problematic.
         if (!err) {
           this._d('a middleware rejected the connection')
           client.ws.send('err:A server middleware rejected your connection.')
@@ -209,20 +186,45 @@ class Server extends EventEmitter {
       }))
     }
 
-    client._handshakePromise.then((obj) => {
-      this._d('handshake resolved')
-      const isResume = obj.isResume
-      const newResumeToken = obj.newResumeToken
-      const existingClient = obj.existingClient
-      if (isResume) {
-        handleSessionResume(newResumeToken, existingClient)
-      } else {
-        handleNewSession(newResumeToken)
+    const setupConnection = () => {
+      this._d('finishing setup on new connection')
+      try {
+        client.removeAllListeners('error')
+        if (!client.isOpen()) {
+          this._d('server client closed before we could finish setup')
+          return setupErrorHandler(new Error('client closed before setup finish'))
+        }
+
+        if (this._failless) {
+          this._d('[failless] adding server client error handler')
+          client.on('error', (err) => {
+            this._d(`[failless] handling server client error: ${maybestack(err)}`)
+          })
+        }
+
+        client._register()
+      } catch (err) {
+        this._d(`connection creation errored: ${maybestack(err)}`)
+        client.close()
+        return setupErrorHandler(err)
       }
-    }).catch((err) => {
-      // Handshake failed, and the client has closed and cleaned up.
-      setupErrorHandler(err)
-    })
+    }
+
+    let calledSetupErrorHandler = false
+    const setupErrorHandler = (err) => {
+      if (calledSetupErrorHandler) return
+      calledSetupErrorHandler = true
+      this._d('called setup error handler')
+      if (client) {
+        this.pool.unreserveId(client.id)
+        this.sessionManager.unreserveToken(client._sessionToken)
+        client.removeAllListeners('error')
+        client.on('error', (err) => {
+          this._d(`error handler called on defunct connection: ${maybestack(err)}`)
+        })
+      }
+      this.emit('connectionSetupError', err)
+    }
   }
 }
 

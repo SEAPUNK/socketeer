@@ -2,40 +2,36 @@
 
 const debug = require('debug')
 const maybestack = require('maybestack')
-const WebSocket = require('ws')
 const Promise = require('bluebird')
 const ClientAbstract = require('./ClientAbstract')
+const ClientPreparer = require('./ClientPreparer')
+const WebSocket = require('ws')
 
 class Client extends ClientAbstract {
   constructor (address, options) {
     super()
 
-    if (!options) options = {}
     const _d = this._d = debug('socketeer:Client')
 
+    if (!options) options = {}
     this._wsConstructArgs = [address, options.protocols, options.ws]
-
     this._heartbeatTimeout = options.heartbeatTimeout || 15000
-    _d(`heartbeat timeout set to ${this._heartbeatTimeout}`)
-
     this._handshakeTimeout = options.handshakeTimeout || 10000
-    _d(`handshake timeout set to ${this._handshakeTimeout}`)
-
     this._reconnectWait = options.reconnectWait || 5000
-    _d(`reconnect wait set to ${this._reconnectWait}`)
-
     this._failless = (options.failless !== false)
-    _d(`failless set to ${this._failless}`)
 
     this._isReady = false
     this._isReconnection = false
-    this._handshakeStep = 0
+
     this._resumePromiseResolve = null
     this._resumeToken = null
-    this._handshakeTimer = null
     this._heartbeatTimer = null
     this._willReconnect = false
-    // TODO: Introduce _handshakeFinished
+
+    this.ws = {
+      readyState: WebSocket.CLOSED,
+      CLOSED: WebSocket.CLOSED
+    }
 
     if (this._failless) {
       _d('[failless] adding client error handler')
@@ -44,284 +40,81 @@ class Client extends ClientAbstract {
       })
     }
 
-    this._createWebsocket()
+    this._prepareConnection()
   }
 
-  _createWebsocket () {
-    this._d('creating websocket')
-    this.ws = WebSocket.apply(null, this._wsConstructArgs)
-    // See docs/development/extending-client-abstract.md
-    this._socketeerClosing = false
-    this._attachEvents()
-  }
+  _prepareConnection () {
+    this._d('preparing new connection')
+    const wsArgs = this._wsConstructArgs
+    const handshakeTimeout = this._handshakeTimeout
+    const token = (this._resumePromiseResolve) ? this._resumeToken : null
 
-  _attachEvents () {
-    this._d('attaching events')
-    this.ws.onopen = () => this._handleOpen()
-
-    super._attachEvents()
-  }
-
-  _detachEvents () {
-    this._d('detaching events')
-    this.ws.onopen = () => {
-      this._d('warning: a detached websocket emitted the "open" event')
+    const preparer = new ClientPreparer(wsArgs, handshakeTimeout, token)
+    preparer.openHandler = () => {
+      this._emit('unreadyOpen', this._isReconnection)
     }
+    preparer.promise.then((retval) => {
+      const ws = retval.ws
+      const heartbeatInterval = retval.heartbeatInterval
+      const isResume = retval.isResume
+      const resumeOk = retval.resumeOk
+      const resumeToken = retval.resumeToken
 
-    super._detachEvents()
-  }
+      // The resume token is reusable on preparation errors.
+      // Only when the token could be successfully consumed do we
+      // prevent reusage of it.
+      this._resumeToken = resumeToken
 
-  _handleClose (closeEvent) {
-    // TODO: Use _handshakeFinished to throw an error if the handshake is incomplete
+      this._heartbeatInterval = heartbeatInterval
 
-    this._isReady = false
-    this._stopHeartbeatTimeout()
-    super._handleClose(closeEvent)
-  }
-
-  _handleOpen () {
-    this._d('handling open')
-    // Right now, we can't tell whether we can resume this session or not,
-    //  but we can tell them whether it can be a session resume.
-    this._emit('unreadyOpen', this._isReconnection)
-    this._startHandshakeTimeout()
-  }
-
-  _startHandshakeTimeout () {
-    this._d('starting handshake timeout')
-    this._handshakeTimer = setTimeout(() => {
-      this._failHandshake()
-    }, this._handshakeTimeout)
-  }
-
-  _failHandshake () {
-    // Don't fail the handshake if the connection is already ready.
-    if (this._isReady) return
-    this._d('failing handshake')
-    this._handleError(new Error('handshake timed out'))
-  }
-
-  _stopHandshakeTimeout () {
-    if (this._handshakeTimer) clearTimeout(this._handshakeTimer)
-    delete this._handshakeTimer
-  }
-
-  _handleMessage (messageEvent) {
-    let data = messageEvent.data
-    const _d = this._d
-    // TODO: Issue #37
-    if (!this.isOpen()) {
-      _d('message handler ignored due to closed socket')
-      return
-    }
-
-    _d('handling message')
-    if (!this._isReady) {
-      _d('client not ready, handling handshake messages')
-      switch (this._handshakeStep) {
-        case 0:
-          this._handshakeStep = 1
-          return this._handleServerHandshake(data)
-        case 1:
-          this._handshakeStep = 2
-          return this._handleHandshakeResponse(data)
-        case 2:
-          return this._handleError(new Error('server sent unexpected handshake message, although we are done listening'))
-        default:
-          return this._handleError(new Error(`[internal] unknown handshake step: ${this._handshakeStep}`))
+      if (isResume && !resumeOk) {
+        return this._resolveSessionResume(false)
       }
-    } else {
-      if (data === 'h') {
-        _d('message is heartbeat')
-        this._handleHeartbeat()
-        return
-      } else {
-        super._handleMessage(messageEvent)
+
+      this.ws = ws
+
+      // See docs/development/extending-client-abstract.md
+      this._socketeerClosing = false
+
+      this._attachEvents()
+      this._finalizePreparation(isResume)
+    }).catch((err) => {
+      // Do NOT emit the 'error' event if it's a session resume attempt.
+      if (token) {
+        return this._resolveSessionResume(false)
       }
-    }
+      // Else, we can emit the 'error' and 'close' events.
+      this._emit('error', err, true)
+      this._emit('close', null, null, err)
+    })
   }
 
-  _handleServerHandshake (data) {
-    const _d = this._d
-    _d('handling server handshake (first server message)')
-    if (typeof data !== 'string') {
-      return this._handleError(new Error('server handshake data is not a string'))
-    }
-
-    const parts = data.split(':')
-    /*
-      The first part of the message should be the string: 'socketeer'.
-      This indicates that the server is in fact a socketeer server.
-     */
-    if (parts[0] !== 'socketeer') {
-      return this._handleError(new Error('handshake: server is not a socketeer server'))
-    }
-
-    /*
-      The second part of the message should be the server protocol version.
-      This is to ensure compatibility.
-
-      See the protocol docs for validation requirements.
-     */
-    if (
-      typeof parts[1] !== 'string' ||
-      parts[1].indexOf('v') !== 0
-    ) {
-      return this._handleError(new Error('handshake: version string is invalid'))
-    }
-    const serverVersion = Math.floor(+parts[1].replace(/^v/, ''))
-    if (
-      Number.isNaN(parts[1]) ||
-      parts[1] <= 0
-    ) {
-      return this._handleError(new Error('handshake: version number is invalid'))
-    }
-
-    if (serverVersion !== this.PROTOCOL_VERSION) {
-      return this.ws.send(`v${this.PROTOCOL_VERSION}`, (err) => {
-        if (err) {
-          return this._handleError(new Error('handshake: failed sending protocol version to server (either way, the server protocol is incompatible with the client)'))
-        } else {
-          return this._handleError(new Error(`handshake: server protocol version is incompatible with ours. server: ${serverVersion} - client: ${this.PROTOCOL_VERSION}`))
-        }
-      })
-    }
-
-    /*
-      The third part of the message should be the heartbeat interval set message.
-      This is to make heartbeats work.
-
-      See the protocol docs for validation requirements.
-     */
-    if (
-      typeof parts[2] !== 'string' ||
-      parts[2].indexOf('i') !== 0
-    ) {
-      return this._handleError(new Error('handshake: heartbeat interval set message is invalid'))
-    }
-    const serverHeartbeatInterval = Math.floor(+parts[2].replace(/^i/, ''))
-    if (
-      Number.isNaN(parts[2]) ||
-      parts[2] < 0 ||
-      parts[2] > 2147483647
-    ) {
-      return this._handleError(new Error('handshake: heartbeat interval is an invalid number'))
-    }
-
-    this._heartbeatInterval = serverHeartbeatInterval
-    this._d(`heartbeat interval set to ${this._heartbeatInterval}`)
-
-    /*
-      Now we send our handshake message.
-     */
-    if (this._resumePromiseResolve) {
-      this._d(`sending session resume token: ${this._resumeToken}`)
-      const token = this._resumeToken
-      this._resumeToken = null
-      this.ws.send(`r@${token}`)
-    } else {
-      this._d('querying for session resume token')
-      this.ws.send('r?')
-    }
-  }
-
-  _handleHandshakeResponse (data) {
-    const _d = this._d
-    _d('handling server handshake (second server message)')
-    // Stop the handshake timeout.
-    this._stopHandshakeTimeout()
-    if (typeof data !== 'string') {
-      this._handleError(new Error('server handshake data is not a string'))
-      return
-    }
-
-    const parts = data.split(':')
-    /*
-      The first part should be either 'err' or 'ok'.
-      If err, then handle the error.
-     */
-    if (
-      parts[0] === 'ok'
-    ) {
-      // Do nothing.
-    } else if (
-      parts[0] === 'err'
-    ) {
-      return this._handleError(new Error(`handshake finalization: server encountered an error (${data})`))
-    } else {
-      return this._handleError(new Error('handshake finalization: unexpected data received'))
-    }
-
-    /*
-      The second part should be the session resume status.
-      Either way, the other functions take care of this.
-     */
-    if (this._resumePromiseResolve) {
-      this._handlePotentialSessionResume(parts)
-    } else {
-      this._handleSetSessionResume(parts)
-    }
-  }
-
-  _handlePotentialSessionResume (parts) {
-    /*
-      Check the session resume status. It must be either - or +
-     */
-    if (
-      parts[1] === '-'
-    ) {
-      this._d('session resume failed')
-      this.close()
-    } else if (
-      parts[1] === '+'
-    ) {
-      // This means we have also have a new session resume token.
-      const newToken = parts[2]
-      if (!this._validateSessionResumeToken(newToken)) {
-        return this._handleError(new Error('handshake finalization: session resumed, but invalid new session resume token'))
-      } else {
-        this._d(`session resumed OK with new token: ${newToken}`)
-        this._resumeToken = newToken
-        this._finalizeHandshake(true)
-      }
-    } else {
-      return this._handleError(new Error('handshake finalization: invalid session resume status'))
-    }
-  }
-
-  _handleSetSessionResume (parts) {
-    /*
-      Check the session resume status. It must be either y or n
-     */
-    if (
-      parts[1] === 'y'
-    ) {
-      // This means we also have a session resume token.
-      const newToken = parts[2]
-      if (!this._validateSessionResumeToken(newToken)) {
-        return this._handleError(new Error('handshake finalization: invalid new session resume token'))
-      } else {
-        this._d(`new resume token: ${newToken}`)
-        this._resumeToken = newToken
-        this._finalizeHandshake(false)
-      }
-    } else if (
-      parts[1] === 'n'
-    ) {
-      this._d('server does not support session resuming')
-      this._finalizeHandshake(false)
-    } else {
-      return this._handleError(new Error('handshake finalization: invalid session resume status'))
-    }
-  }
-
-  _finalizeHandshake (isSessionResume) {
+  _finalizePreparation (isSessionResume) {
     if (!isSessionResume) this._clearMessageQueue()
     this._isReady = true
     this._resetHeartbeatTimeout()
     this._resumeMessageQueue()
     if (!isSessionResume) this._emit('open', this._isReconnection)
     if (isSessionResume) this._resolveSessionResume(true)
+  }
+
+  _handleClose (closeEvent) {
+    this._isReady = false
+    this._stopHeartbeatTimeout()
+    super._handleClose(closeEvent)
+  }
+
+  _handleMessage (messageEvent) {
+    let data = messageEvent.data
+
+    this._d('handling message')
+    if (data === 'h') {
+      if (!this.isOpen()) return
+      this._handleHeartbeat()
+      return
+    } else {
+      super._handleMessage(messageEvent)
+    }
   }
 
   _resolveSessionResume (isOkay) {
@@ -358,7 +151,7 @@ class Client extends ClientAbstract {
   resume () {
     return new Promise((resolve, reject) => {
       this._d('attempting session resume')
-      if (!this.isClosed()) {
+      if (!this.isClosing() && !this.isClosed()) {
         this._d('has not closed, nothing to resume')
         return reject(new Error('client has not disconnected to resume session yet'))
       }
@@ -374,11 +167,11 @@ class Client extends ClientAbstract {
   }
 
   reconnect (immediate) {
-    if (!this.isClosed()) {
+    if (!this.isClosing() && !this.isClosed()) {
       throw new Error('client has not disconnected to reconnect yet')
     }
     // Prevent duplicate reconnection attempts.
-    if (!this._willReconnect) return
+    if (this._willReconnect) return
     this._willReconnect = true
     // Clear out the resume token because
     // we are not going to resume the session.
@@ -392,10 +185,9 @@ class Client extends ClientAbstract {
 
   _doReconnect () {
     this._d('reconnecting')
-    this._handshakeStep = 0
     this._willReconnect = false
     this._isReconnection = true
-    this._createWebsocket()
+    this._prepareConnection()
   }
 }
 

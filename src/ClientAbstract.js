@@ -4,9 +4,9 @@ const EventEmitter = require('events').EventEmitter
 const maybestack = require('maybestack')
 const exists = require('deep-exists')
 const MessageQueue = require('./MessageQueue')
-const ActionResponse = require('./enums').ActionResponse
-
-const PROTOCOL_VERSION = 2
+const enums = require('./enums')
+const ActionResponse = enums.ActionResponse
+const PROTOCOL_VERSION = enums.PROTOCOL_VERSION
 
 class ClientAbstract extends EventEmitter {
   constructor () {
@@ -17,7 +17,8 @@ class ClientAbstract extends EventEmitter {
     if (!this._d) this._d = () => {}
     this._da = (msg) => this._d(`[abstract] ${msg}`)
 
-    this._events = new Map()
+    // We can't have _events, because it's an EventEmitter private property.
+    this._sEvents = new Map()
     this._actions = new Map()
     this._actionPromises = new Map()
     this._currentActionId = 0
@@ -122,11 +123,7 @@ class ClientAbstract extends EventEmitter {
       this._da('socketeer is closing, ignoring _handleError')
       return
     }
-    // If we are doing a session resume,
-    // we do *not* want to emit an error event.
-    if (!this._resumePromiseResolve) {
-      this._emit('error', err, true)
-    }
+    this._emit('error', err, true)
     this._closeMustHaveError = true
     this.close()
     this._da('error handling: handling close')
@@ -153,6 +150,7 @@ class ClientAbstract extends EventEmitter {
     // This is in the case the websocket emits the 'close' event
     //  before we get the chance to call the _handleClose
     //  in the _handleError function.
+    // TODO: Is this really necessary?
     if (!error && this._closeMustHaveError) {
       this._da('ignoring close message because it does not have error, but it was specified that it should')
       return
@@ -163,14 +161,8 @@ class ClientAbstract extends EventEmitter {
     this._da('close message: ' + message)
     this._da('close error: ' + maybestack(error))
     this._detachEvents()
-    if (this._resumePromiseResolve) {
-      // This means we are a Client, and we attempted a session resume.
-      // We *should* have this function.
-      this._resolveSessionResume(false)
-    } else {
-      const eventName = (this._closeIsPause) ? 'pause' : 'close'
-      this._emit(eventName, code, message, error)
-    }
+    const eventName = (this._closeIsPause) ? 'pause' : 'close'
+    this._emit(eventName, code, message, error)
   }
 
   _processQueue (msg, done) {
@@ -304,7 +296,7 @@ class ClientAbstract extends EventEmitter {
 
   _handleEvent (data) {
     this._da(`handling event: ${data.e}`)
-    const handlers = this._events.get(data.e)
+    const handlers = this._sEvents.get(data.e)
     if (!handlers || !handlers.length) return
     this._da(`handlers exist for event ${data.e}: there are ${handlers.length} handlers`)
     for (let handler of handlers) {
@@ -324,8 +316,8 @@ class ClientAbstract extends EventEmitter {
       throw new Error('event handler is not a function')
     }
     this._da(`defining event handler for ${name}`)
-    if (!this._events.get(name)) this._events.set(name, [])
-    this._events.get(name).push(handler)
+    if (!this._sEvents.get(name)) this._sEvents.set(name, [])
+    this._sEvents.get(name).push(handler)
   }
 
   action (name, handler, force) {
@@ -359,20 +351,6 @@ class ClientAbstract extends EventEmitter {
   _generateActionId () {
     this._da(`generated action id: ${this._currentActionId}`)
     return this._currentActionId++
-  }
-
-  _validateSessionResumeToken (token) {
-    // Note: If the session resume token does have a : in it during the handshake,
-    // then it will cause session resuming to silently fail.
-    if (
-      typeof token !== 'string' ||
-      token.length < 5 ||
-      token.length > 200 ||
-      token.indexOf(':') !== -1
-    ) {
-      return false
-    }
-    return true
   }
 
   isOpening () {

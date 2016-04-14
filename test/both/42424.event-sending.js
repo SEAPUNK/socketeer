@@ -9,6 +9,7 @@ test('server and client should correctly send and receive events', (t) => {
     const server = new Server()
     let client
     server.on('error', (err) => reject(new Error('Server errored out: ' + err)))
+    server.on('connectionSetupError', reject)
     server.listen(PORT).then(() => {
       server.on('connection', (sclient) => {
         sclient.on('error', (err) => reject(new Error('Server client errored out: ' + err)))
