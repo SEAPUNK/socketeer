@@ -121,28 +121,33 @@ class SessionManager {
     })
   }
 
-  cleanSession (token, session) {
-    this._d(`cleaning session: ${token}`)
+  cleanSession (token, session, isManual) {
+    this._d(`cleaning session (isManual: ${isManual}): ${token}`)
     this.deleteSession(token)
-    session.client._destroySession()
+    session.client._destroySession(isManual)
   }
 
-  deactivateSession (token) {
+  deactivateSession (token, destroy) {
     this._d(`deactivating session: ${token}`)
     const session = this.sessions.get(token)
     if (!session) return // TODO: Throw an error instead?
     if (!session.active) return // TODO: Throw an error instead?
     if (session.timeout) return // TODO: Throw an error instead?
     session.active = false
-    session.timeout = setTimeout(() => {
+    const cleanFn = () => {
       this._d(`session timeout called for token: ${token}`)
       if (session.active) return
       if (session.isResuming) {
         session.timeoutCalled = true
         return
       }
-      this.cleanSession(token, session)
-    }, this.server._sessionTimeout)
+      this.cleanSession(token, session, destroy)
+    }
+    if (destroy) {
+      cleanFn()
+    } else {
+      session.timeout = setTimeout(cleanFn, this.server._sessionTimeout)
+    }
   }
 
   tokenInUse (token) {

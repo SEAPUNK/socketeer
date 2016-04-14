@@ -23,6 +23,9 @@ class ServerClient extends ClientAbstract {
     // emit the real 'close' event.
     this._closeIsPause = server.supportsResuming
 
+    // Whether to not pause the session on client close.
+    this._disableResuming = false
+
     this._isReady = false
 
     this._d(`new ServerClient from IP address: ${this.ip}`)
@@ -57,13 +60,17 @@ class ServerClient extends ClientAbstract {
 
     this._stopHeartbeat()
     if (this.server.supportsResuming) {
-      this.server.sessionManager.deactivateSession(this._sessionToken)
+      this.server.sessionManager.deactivateSession(this._sessionToken, this._disableResuming)
     } else {
       this.server.room.removeFromAll(this)
       this.server.room._leaveAll(this)
       this.server.pool.remove(this.id)
     }
 
+    if (this._disableResuming) {
+      // Don't emit 'pause', but 'close'.
+      this._closeIsPause = false
+    }
     super._handleClose(closeEvent)
   }
 
@@ -92,12 +99,16 @@ class ServerClient extends ClientAbstract {
     this._startHeartbeat()
   }
 
-  _destroySession () {
+  _destroySession (isManual) {
     // This function is only called from the session manager.
     this.server.room.removeFromAll(this)
     this.server.room._leaveAll(this)
     this.server.pool.remove(this.id)
-    this._emit('close')
+    // isManual is true if the server client was closed with close() or terminate()
+    // on the server side.
+    if (!isManual) {
+      this._emit('close')
+    }
   }
 
   _register () {
@@ -131,6 +142,18 @@ class ServerClient extends ClientAbstract {
     this._startHeartbeat()
     this._resumeMessageQueue()
     this._emit('resume', this.ip, oldIp)
+  }
+
+  close (code, message) {
+    this._d('closing connection')
+    this._disableResuming = true
+    super.close(code, message)
+  }
+
+  terminate () {
+    this._d('terminating connection')
+    this._disableResuming = true
+    super.terminate()
   }
 }
 
