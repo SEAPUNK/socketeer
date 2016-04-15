@@ -1,6 +1,6 @@
 {
   "name": "socketeer",
-  "version": "0.8.3-rc0",
+  "version": "0.8.3-rc1",
   "description": "yet another websocket framework",
   "main": "lib/index.js",
   "scripts": {
