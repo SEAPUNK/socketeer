@@ -15,5 +15,5 @@ socketeer: yet another websocket framework
 `npm install socketeer`
 
 - [usage](docs/usage.md)
-- [api](docs/api/)
+- [api](docs/api/) **outdated, working on updating**
 - [protocol](docs/protocol/)
