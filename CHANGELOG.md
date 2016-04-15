@@ -8,7 +8,7 @@ client.request('stuff', null, {
 })
 
 client.request('stuff', null, {
-  timeout: 0 // or null for no timeout
+  timeout: 0 // or another falsy value except undefined for no timeout
 })
 ```
 
