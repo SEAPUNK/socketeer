@@ -259,18 +259,10 @@ class ClientAbstract extends EventEmitter {
 
   _handleActionResponse (data) {
     this._da(`handling action response: ${data.i}`)
-    // TODO: Action response handler cleanup after usage
     const handler = this._actionPromises.get(data.i)
-    // We are not throwing an error if the connection sends an
-    // action response for a nonexistent handler because the action
-    // response handler map is cleaned up on a regular basis, same with
-    // the action timing out.
-    // It could indicate that the client or server is faulty, but
-    // it'll have to be something the client or server code writer
-    // needs to figure out.
+    // The timeout could have cleaned up the handler.
     if (!handler) return
-    // This is in case the server responds after the timeout.
-    if (handler.finished) return
+    // Indicate to the action timeout that it should not do anything
     handler.finished = true
     if (handler.timeout) clearTimeout(handler.timeout)
     this._da('action response handler exists, continuing')
@@ -297,6 +289,7 @@ class ClientAbstract extends EventEmitter {
     } catch (err) {
       this._emit('error', new Error('could not resolve or reject the action response handler: ' + err))
     }
+    this._actionPromises.delete(data.i)
   }
 
   _handleEvent (data) {
@@ -351,7 +344,7 @@ class ClientAbstract extends EventEmitter {
         action.timeout = setTimeout(() => {
           if (action.finished) return
           this._d(`Action ID ${id} timed out`)
-          action.finished = true
+          this._actionPromises.delete(id)
           action.reject(new Error('Action timed out'))
         }, opts.timeout)
       }
