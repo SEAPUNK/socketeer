@@ -13,6 +13,12 @@ client.request('stuff', null, {
 ```
 * Heartbeat timeouts no longer emit the 'error' event, but a 'timeout' event instead.
 * Changed `setImmediate` calls to use `set-immediate-shim` instead, for compatibility reasons
+* Bump dependencies and devDependencies:
+```
+ bluebird  ^3.3.4  →  ^3.3.5
+ uuid      ^2.0.1  →  ^2.0.2
+ ws        ^1.0.1  →  ^1.1.0
+```
 
 0.8.2
 ===
