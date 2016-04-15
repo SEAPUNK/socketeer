@@ -11,6 +11,7 @@ client.request('stuff', null, {
   timeout: 0 // or another falsy value except undefined for no timeout
 })
 ```
+* Heartbeat timeouts no longer emit the 'error' event, but a 'timeout' event instead.
 
 0.8.2
 ===
