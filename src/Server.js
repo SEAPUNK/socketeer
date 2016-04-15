@@ -5,6 +5,7 @@ const debug = require('debug')
 const Promise = require('bluebird')
 const maybestack = require('maybestack')
 const WebSocket = require('ws')
+const setImmediateShim = require('set-immediate-shim')
 const inspect = require('util').inspect
 const RoomManager = require('./RoomManager')
 const ClientPool = require('./ClientPool')
@@ -164,7 +165,7 @@ class Server extends EventEmitter {
           // Assure that the promise resolves asynchronously.
           // This is to maintain consistency that handleNewSession
           // is an async function
-          return (new Promise((resolve, reject) => setImmediate(resolve)))
+          return (new Promise((resolve, reject) => setImmediateShim(resolve)))
         }
       }).then(() => {
         setupConnection()

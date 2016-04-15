@@ -3,6 +3,7 @@
 const EventEmitter = require('events').EventEmitter
 const maybestack = require('maybestack')
 const exists = require('deep-exists')
+const setImmediateShim = require('set-immediate-shim')
 const MessageQueue = require('./MessageQueue')
 const enums = require('./enums')
 const ActionResponse = enums.ActionResponse
@@ -170,7 +171,7 @@ class ClientAbstract extends EventEmitter {
       this._da('socket is not open, pausing message queue')
       this._messageQueue.pause()
       this._messageQueue.unshift(msg)
-      return setImmediate(done)
+      return setImmediateShim(done)
     } else {
       this._da('sending next message in queue')
       return this.ws.send(msg, done)
