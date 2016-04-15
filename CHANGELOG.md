@@ -1,7 +1,16 @@
 0.8.3
 ===
 
-* Nothing here yet
+* Added timeouts to actions (default `30000ms`)
+```js
+client.request('stuff', null, {
+  timeout: 10000 // 10 second timeout
+})
+
+client.request('stuff', null, {
+  timeout: 0 // or null for no timeout
+})
+```
 
 0.8.2
 ===

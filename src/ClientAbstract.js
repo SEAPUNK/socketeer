@@ -268,6 +268,10 @@ class ClientAbstract extends EventEmitter {
     // it'll have to be something the client or server code writer
     // needs to figure out.
     if (!handler) return
+    // This is in case the server responds after the timeout.
+    if (handler.finished) return
+    handler.finished = true
+    if (handler.timeout) clearTimeout(handler.timeout)
     this._da('action response handler exists, continuing')
     this._da(`determining error from status: ${data.s}`)
     let err
@@ -332,14 +336,25 @@ class ClientAbstract extends EventEmitter {
     this._actions.set(name, handler)
   }
 
-  // TODO: Action timeouts
-  request (name, data) {
+  request (name, data, opts) {
     return new Promise((resolve, reject) => {
+      if (!opts) opts = {}
+      if (opts.timeout === undefined) opts.timeout = 30000 // default 30 second timeout
       const id = this._generateActionId()
-      this._actionPromises.set(id, {
+      const action = {
         resolve: resolve,
-        reject: reject
-      })
+        reject: reject,
+        finished: false
+      }
+      if (opts.timeout) {
+        action.timeout = setTimeout(() => {
+          if (action.finished) return
+          this._d(`Action ID ${id} timed out`)
+          action.finished = true
+          action.reject(new Error('Action timed out'))
+        }, opts.timeout)
+      }
+      this._actionPromises.set(id, action)
       this.send({
         i: id,
         a: name,
