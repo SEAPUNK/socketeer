@@ -12,6 +12,7 @@ client.request('stuff', null, {
 })
 ```
 * Heartbeat timeouts no longer emit the 'error' event, but a 'timeout' event instead.
+* Changed `setImmediate` calls to use `set-immediate-shim` instead, for compatibility reasons
 
 0.8.2
 ===
