@@ -19,6 +19,7 @@ client.request('stuff', null, {
  uuid      ^2.0.1  →  ^2.0.2
  ws        ^1.0.1  →  ^1.1.0
 ```
+* Fixed memory leak where action handlers are not cleaned up
 
 0.8.2
 ===
