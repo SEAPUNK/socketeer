@@ -88,7 +88,7 @@ function * configGenerator () {
   // unminified builds
   // /////////////////
 
-  config.entry = './lib/BrowserClient.js'
+  config.entry = './lib/debugless/BrowserClient.js'
 
   // var export
   config.output.libraryTarget = 'var'
