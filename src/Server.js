@@ -2,7 +2,6 @@
 
 const EventEmitter = require('events').EventEmitter
 const debug = require('debug')
-const Promise = require('bluebird')
 const maybestack = require('maybestack')
 const WebSocket = require('ws')
 const setImmediateShim = require('set-immediate-shim')

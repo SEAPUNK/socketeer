@@ -39,7 +39,6 @@
   "homepage": "https://github.com/SEAPUNK/socketeer#readme",
   "dependencies": {
     "async": "^2.0.0-rc.3",
-    "bluebird": "^3.3.5",
     "debug": "^2.2.0",
     "deep-exists": "^1.0.1",
     "maybestack": "^2.0.0",

@@ -2,7 +2,6 @@
 
 const debug = require('debug')
 const maybestack = require('maybestack')
-const Promise = require('bluebird')
 const ClientAbstract = require('./ClientAbstract')
 const ClientPreparer = require('./ClientPreparer')
 
