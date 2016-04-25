@@ -3,12 +3,12 @@ node_modules
 .npm
 .node_repl_history
 
-test
-_test
-src
-docs
-README.md
-CHANGELOG.md
+/test
+/_test
+/docs
+/README.md
+/CHANGELOG.md
+
 .babelrc
 .gitignore
 .travis.yml

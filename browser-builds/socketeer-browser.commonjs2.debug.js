@@ -812,9 +812,6 @@ module.exports =
 /* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Client__ = __webpack_require__(4);
-	/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Client___default = __WEBPACK_IMPORTED_MODULE_0__Client__ && __WEBPACK_IMPORTED_MODULE_0__Client__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_0__Client__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_0__Client__; }
-	/* harmony import */ Object.defineProperty(__WEBPACK_IMPORTED_MODULE_0__Client___default, 'a', { get: __WEBPACK_IMPORTED_MODULE_0__Client___default });
 	'use strict';
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -823,7 +820,7 @@ module.exports =
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-
+	var Client = __webpack_require__(4);
 
 	var BrowserClient = function (_Client) {
 	  _inherits(BrowserClient, _Client);
@@ -835,7 +832,7 @@ module.exports =
 	  }
 
 	  return BrowserClient;
-	}(/* harmony import */__WEBPACK_IMPORTED_MODULE_0__Client___default.a);
+	}(Client);
 
 	module.exports = BrowserClient;
 

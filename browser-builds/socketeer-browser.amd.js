@@ -610,9 +610,6 @@ define("SocketeerBrowserClient", [], function() { return /******/ (function(modu
 /* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Client__ = __webpack_require__(2);
-	/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Client___default = __WEBPACK_IMPORTED_MODULE_0__Client__ && __WEBPACK_IMPORTED_MODULE_0__Client__.__esModule ? function() { return __WEBPACK_IMPORTED_MODULE_0__Client__['default'] } : function() { return __WEBPACK_IMPORTED_MODULE_0__Client__; }
-	/* harmony import */ Object.defineProperty(__WEBPACK_IMPORTED_MODULE_0__Client___default, 'a', { get: __WEBPACK_IMPORTED_MODULE_0__Client___default });
 	'use strict';
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -621,7 +618,7 @@ define("SocketeerBrowserClient", [], function() { return /******/ (function(modu
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-
+	var Client = __webpack_require__(2);
 
 	var BrowserClient = function (_Client) {
 	  _inherits(BrowserClient, _Client);
@@ -633,7 +630,7 @@ define("SocketeerBrowserClient", [], function() { return /******/ (function(modu
 	  }
 
 	  return BrowserClient;
-	}(/* harmony import */__WEBPACK_IMPORTED_MODULE_0__Client___default.a);
+	}(Client);
 
 	module.exports = BrowserClient;
 
