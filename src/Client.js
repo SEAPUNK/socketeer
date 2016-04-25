@@ -1,7 +1,7 @@
 'use strict'
 
 const debug = require('debug') // [DEBUG]
-const maybestack = require('maybestack')
+const maybestack = require('maybestack') // (only used with debugger so far) [DEBUG]
 const ClientAbstract = require('./ClientAbstract')
 const ClientPreparer = require('./ClientPreparer')
 

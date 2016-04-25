@@ -1,0 +1,17 @@
+'use strict'
+
+exports.BrowserClient = exports.BrowserClient = require('./src/BrowserClient')
+exports.Client = exports.NodeClient = require('./src/NodeClient')
+exports.RawClient = require('./src/Client')
+exports.ClientAbstract = require('./src/ClientAbstract')
+exports.ClientPool = require('./src/ClientPool')
+exports.ClientPreparer = require('./src/ClientPreparer')
+exports.MessageQueue = require('./src/MessageQueue')
+exports.Room = require('./src/Room')
+exports.RoomManager = require('./src/RoomManager')
+exports.Server = require('./src/Server')
+exports.ServerClient = require('./src/ServerClient')
+exports.ServerClientPreparer = require('./src/ServerClientPreparer')
+exports.SessionManager = require('./src/SessionManager')
+exports.enums = require('./src/enums')
+exports.util = require('./src/util')
