@@ -20,6 +20,7 @@ client.request('stuff', null, {
  ws        ^1.0.1  →  ^1.1.0
 ```
 * Fixed memory leak where action handlers are not cleaned up
+* Added experimental support for browser builds
 
 0.8.2
 ===

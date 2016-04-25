@@ -3,7 +3,8 @@
 exports.ClientAbstract = require('./ClientAbstract')
 exports.MessageQueue = require('./MessageQueue')
 
-exports.Client = require('./Client')
+exports.Client = exports.NodeClient = require('./NodeClient')
+exports.BrowserClient = exports.BrowserClient = require('./BrowserClient')
 exports.ClientPreparer = require('./ClientPreparer')
 
 exports.ServerClient = require('./ServerClient')

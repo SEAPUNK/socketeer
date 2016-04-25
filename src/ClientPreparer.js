@@ -1,15 +1,15 @@
 'use strict'
 
 const debug = require('debug')
-const WebSocket = require('ws')
 const validateSessionResumeToken = require('./util').validateSessionResumeToken
 const PROTOCOL_VERSION = require('./enums').PROTOCOL_VERSION
 
 class ClientPreparer {
-  constructor (wsArgs, handshakeTimeout, token) {
+  constructor (wsArgs, handshakeTimeout, token, WebSocket) {
     this.wsArgs = wsArgs
     this.handshakeTimeout = handshakeTimeout
     this.resumeToken = token
+    this._WebSocket = WebSocket
     this._d = debug('socketeer:ClientPreparer')
     this.prepared = false
     this.promise = new Promise((resolve, reject) => {
@@ -31,7 +31,7 @@ class ClientPreparer {
 
   createSocket () {
     this._d('creating websocket')
-    this.ws = this.returnValue.ws = WebSocket.apply(null, this.wsArgs)
+    this.ws = this.returnValue.ws = createWebsocket(this._WebSocket, this.wsArgs)
     this.ws.onopen = () => this.handleOpen()
     this.ws.onmessage = (messageEvent) => this.handleMessage(messageEvent)
     this.ws.onerror = (err) => this.handleError(err)
@@ -272,6 +272,11 @@ class ClientPreparer {
       this.reject(new Error('Handshake timed out.'))
     }, this.handshakeTimeout)
   }
+}
+
+function createWebsocket (WebSocket, args) {
+  // Max of 3 construct args so far
+  return new WebSocket(args[0], args[1], args[2])
 }
 
 function noop () { }

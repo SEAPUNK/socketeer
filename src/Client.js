@@ -5,13 +5,14 @@ const maybestack = require('maybestack')
 const Promise = require('bluebird')
 const ClientAbstract = require('./ClientAbstract')
 const ClientPreparer = require('./ClientPreparer')
-const WebSocket = require('ws')
 
 class Client extends ClientAbstract {
-  constructor (address, options) {
+  constructor (address, options, WebSocket) {
     super()
 
     const _d = this._d = debug('socketeer:Client')
+
+    this._WebSocket = WebSocket
 
     if (!options) options = {}
     this._wsConstructArgs = [address, options.protocols, options.ws]
@@ -49,7 +50,7 @@ class Client extends ClientAbstract {
     const handshakeTimeout = this._handshakeTimeout
     const token = (this._resumePromiseResolve) ? this._resumeToken : null
 
-    const preparer = new ClientPreparer(wsArgs, handshakeTimeout, token)
+    const preparer = new ClientPreparer(wsArgs, handshakeTimeout, token, this._WebSocket)
     preparer.openHandler = () => {
       this._emit('unreadyOpen', this._isReconnection)
     }

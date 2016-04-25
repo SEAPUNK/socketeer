@@ -5,7 +5,9 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "standard && mocha",
-    "build": "babel -d lib src",
+    "build": "npm run babel && npm run webpack",
+    "babel": "babel -d lib src",
+    "webpack": "webpack",
     "prepublish": "npm run build",
     "buildtest": "npm run build && npm run test"
   },
@@ -52,7 +54,8 @@
     "babel-preset-es2015-node4": "^2.1.0",
     "babel-preset-stage-0": "^6.5.0",
     "mocha": "^2.4.5",
-    "standard": "^6.0.8"
+    "standard": "^6.0.8",
+    "webpack": "^2.1.0-beta.6"
   },
   "engines": {
     "node": ">= 4.0.0"
