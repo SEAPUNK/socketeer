@@ -6,12 +6,13 @@ const ClientAbstract = require('./ClientAbstract')
 const ClientPreparer = require('./ClientPreparer')
 
 class Client extends ClientAbstract {
-  constructor (address, options, WebSocket) {
+  constructor (address, options, WebSocket, isBrowser) {
     super()
 
     const _d = this._d = debug('socketeer:Client') // [DEBUG]
 
     this._WebSocket = WebSocket
+    this._isBrowserClient = isBrowser
 
     if (!options) options = {}
     this._wsConstructArgs = [address, options.protocols, options.ws]
@@ -49,7 +50,7 @@ class Client extends ClientAbstract {
     const handshakeTimeout = this._handshakeTimeout
     const token = (this._resumePromiseResolve) ? this._resumeToken : null
 
-    const preparer = new ClientPreparer(wsArgs, handshakeTimeout, token, this._WebSocket)
+    const preparer = new ClientPreparer(wsArgs, handshakeTimeout, token, this._WebSocket, this._isBrowserClient)
     preparer.openHandler = () => {
       this._emit('unreadyOpen', this._isReconnection)
     }

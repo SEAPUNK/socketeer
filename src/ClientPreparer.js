@@ -5,11 +5,12 @@ const validateSessionResumeToken = require('./util').validateSessionResumeToken
 const PROTOCOL_VERSION = require('./enums').PROTOCOL_VERSION
 
 class ClientPreparer {
-  constructor (wsArgs, handshakeTimeout, token, WebSocket) {
+  constructor (wsArgs, handshakeTimeout, token, WebSocket, isBrowser) {
     this.wsArgs = wsArgs
     this.handshakeTimeout = handshakeTimeout
     this.resumeToken = token
     this._WebSocket = WebSocket
+    this.isBrowser = isBrowser
     this._d = debug('socketeer:ClientPreparer') // [DEBUG]
     this.prepared = false
     this.promise = new Promise((resolve, reject) => {
@@ -31,7 +32,7 @@ class ClientPreparer {
 
   createSocket () {
     this._d('creating websocket') // [DEBUG]
-    this.ws = this.returnValue.ws = createWebsocket(this._WebSocket, this.wsArgs)
+    this.ws = this.returnValue.ws = createWebsocket(this._WebSocket, this.wsArgs, this.isBrowser)
     this.ws.onopen = () => this.handleOpen()
     this.ws.onmessage = (messageEvent) => this.handleMessage(messageEvent)
     this.ws.onerror = (err) => this.handleError(err)
@@ -274,9 +275,13 @@ class ClientPreparer {
   }
 }
 
-function createWebsocket (WebSocket, args) {
+function createWebsocket (WebSocket, args, isBrowser) {
   // Max of 3 construct args so far
-  return new WebSocket(args[0], args[1], args[2])
+  if (isBrowser) {
+    return new WebSocket(args[0], args[1])
+  } else {
+    return new WebSocket(args[0], args[1], args[2])
+  }
 }
 
 function noop () { }

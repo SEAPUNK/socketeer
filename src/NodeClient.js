@@ -5,8 +5,7 @@ const ws = require('ws')
 
 class NodeClient extends Client {
   constructor (address, options) {
-    super(address, options, ws)
-    this._isBrowserClient = false
+    super(address, options, ws, false)
   }
 }
 
