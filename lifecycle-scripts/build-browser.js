@@ -1,14 +1,19 @@
 'use strict'
 
 const path = require('path')
+const fs = require('fs')
 
 const Promise = require('bluebird')
 const webpack = require('webpack')
 const maybestack = require('maybestack')
+const rimraf = require('rimraf')
 
 const basedir = path.join(__dirname, '../')
 const destdir = path.join(basedir, './browser-builds')
 
+const cleanIgnoreFiles = new Set([
+  'README.md'
+])
 const isDebug = process.argv[2] === 'debug'
 
 function runWebpackBuild (config, ignoreWarnings) {
@@ -127,6 +132,12 @@ function * configGenerator () {
 const config = configGenerator()
 
 Promise.resolve().then(() => {
+  console.log('Cleaning build directory')
+  const files = fs.readdirSync(destdir).filter((file) => !cleanIgnoreFiles.has(file))
+  for (let file of files) {
+    rimraf.sync(path.join(destdir, file))
+  }
+}).then(() => {
   return Promise.coroutine(function * () {
     while (true) {
       const yielded = config.next()
