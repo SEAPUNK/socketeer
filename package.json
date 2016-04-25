@@ -34,7 +34,8 @@
   "standard": {
     "ignore": [
       "browser-builds/",
-      "test/"
+      "test/",
+      "lib/"
     ]
   },
   "homepage": "https://github.com/SEAPUNK/socketeer#readme",
