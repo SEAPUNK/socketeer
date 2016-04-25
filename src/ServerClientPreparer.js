@@ -116,7 +116,7 @@ class ServerClientPreparer {
       parts[0].indexOf('@') === 1
     ) {
       // It is a session resume attempt.
-      this.attemptSessionResume(parts[0].replace(/^r\@/, ''))
+      this.attemptSessionResume(parts[0].replace(/^r@/, ''))
     } else {
       return this.handleError(new Error('Client sent badly formatted session resume message.'))
     }

@@ -49,12 +49,12 @@
     "ws": "^1.1.0"
   },
   "devDependencies": {
-    "babel-cli": "^6.7.5",
-    "babel-eslint": "^6.0.2",
+    "babel-cli": "^6.7.7",
+    "babel-eslint": "^6.0.3",
     "babel-preset-es2015-node4": "^2.1.0",
     "babel-preset-stage-0": "^6.5.0",
     "mocha": "^2.4.5",
-    "standard": "^6.0.8",
+    "standard": "^7.0.0-beta.0",
     "webpack": "^2.1.0-beta.6"
   },
   "engines": {
