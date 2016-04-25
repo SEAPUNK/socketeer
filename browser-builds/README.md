@@ -5,7 +5,7 @@ This is where the browser client builds reside.
 
 Exported as `SocketeerBrowserClient`.
 
-**WARNING: ** If your browser does not support es6 well, you will need to include [`babel-polyfill`][].
+**WARNING**: If your browser does not support es6 well, you will need to include [`babel-polyfill`][].
 
 Library target:
 
