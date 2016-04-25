@@ -2,7 +2,7 @@
 
 const debug = require('debug')
 const randomBytes = require('crypto').randomBytes
-const forever = require('async').forever
+const forever = require('async.forever')
 
 class SessionManager {
   constructor (server) {
