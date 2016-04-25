@@ -1,6 +1,6 @@
 'use strict'
 
-import Client from './Client'
+const Client = require('./Client')
 
 class BrowserClient extends Client {
   constructor (address, options) {
