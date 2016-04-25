@@ -22,6 +22,7 @@ client.request('stuff', null, {
 * Fixed memory leak where action handlers are not cleaned up
 * Added experimental support for browser builds
 * Removed bluebird dependency in favor of environment's Promises
+* Revamped the build system, added experimental support for browser builds
 
 0.8.2
 ===
