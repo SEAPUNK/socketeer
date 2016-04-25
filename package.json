@@ -4,13 +4,14 @@
   "description": "yet another websocket framework",
   "main": "index.js",
   "scripts": {
-    "test": "standard && mocha",
+    "test": "standard && istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
+    "testonly": "standard && mocha",
     "build": "npm run build-debugless && npm run build-browser",
     "build-debugless": "node ./lifecycle-scripts/build-debugless.js",
     "build-browser": "node ./lifecycle-scripts/build-browser.js",
     "build-browser-debug": "node ./lifecycle-scripts/build-browser.js debug",
     "prepublish": "npm run build",
-    "buildtest": "npm run build && npm run test"
+    "buildtest": "npm run build && npm run testonly"
   },
   "repository": {
     "type": "git",
@@ -53,8 +54,11 @@
     "babel-loader": "^6.2.4",
     "babel-preset-es2015-webpack": "^6.4.1",
     "bluebird": "^3.3.5",
+    "coveralls": "^2.11.9",
+    "istanbul": "^0.4.3",
     "mkdirp": "^0.5.1",
     "mocha": "^2.4.5",
+    "mocha-lcov-reporter": "^1.2.0",
     "rimraf": "^2.5.2",
     "standard": "^7.0.0-beta.0",
     "webpack": "^2.1.0-beta.6"
