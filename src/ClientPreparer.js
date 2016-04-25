@@ -1,6 +1,6 @@
 'use strict'
 
-const debug = require('debug')
+const debug = require('debug') // [DEBUG]
 const validateSessionResumeToken = require('./util').validateSessionResumeToken
 const PROTOCOL_VERSION = require('./enums').PROTOCOL_VERSION
 
@@ -10,7 +10,7 @@ class ClientPreparer {
     this.handshakeTimeout = handshakeTimeout
     this.resumeToken = token
     this._WebSocket = WebSocket
-    this._d = debug('socketeer:ClientPreparer')
+    this._d = debug('socketeer:ClientPreparer') // [DEBUG]
     this.prepared = false
     this.promise = new Promise((resolve, reject) => {
       this.resolve = resolve
@@ -30,7 +30,7 @@ class ClientPreparer {
   }
 
   createSocket () {
-    this._d('creating websocket')
+    this._d('creating websocket') // [DEBUG]
     this.ws = this.returnValue.ws = createWebsocket(this._WebSocket, this.wsArgs)
     this.ws.onopen = () => this.handleOpen()
     this.ws.onmessage = (messageEvent) => this.handleMessage(messageEvent)
@@ -39,15 +39,15 @@ class ClientPreparer {
   }
 
   handleOpen () {
-    this._d('handling open')
+    this._d('handling open') // [DEBUG]
     this.openHandler() // used to emit unreadyOpen
     this.startHandshakeTimeout()
   }
 
   handleError (err) {
-    this._d('handling error (unfiltered)')
+    this._d('handling error (unfiltered)') // [DEBUG]
     if (this.prepared) return
-    this._d('handling error')
+    this._d('handling error') // [DEBUG]
     this.prepared = true
     // TODO: Can this call handleClose before we can call our rejection?
     this.ws.close()
@@ -55,9 +55,9 @@ class ClientPreparer {
   }
 
   handleClose () {
-    this._d('handling close (unfiltered)')
+    this._d('handling close (unfiltered)') // [DEBUG]
     if (this.prepared) return
-    this._d('handling close')
+    this._d('handling close') // [DEBUG]
     this.prepared = true
     this.ws.close()
     this.reject(new Error('Socket closed before handshake could complete.'))
@@ -65,9 +65,9 @@ class ClientPreparer {
 
   handleMessage (messageEvent) {
     // TODO: Is there a chance this could be fired after we resolve the handshake?
-    this._d('handling message (unfiltered)')
+    this._d('handling message (unfiltered)') // [DEBUG]
     if (this.prepared) return
-    this._d('handling message')
+    this._d('handling message') // [DEBUG]
     const data = messageEvent.data
     switch (this.handshakeStep) {
       case 0:
@@ -84,7 +84,7 @@ class ClientPreparer {
   }
 
   handleServerHandshake (data) {
-    this._d('handling server handshake')
+    this._d('handling server handshake') // [DEBUG]
     if (typeof data !== 'string') {
       return this.handleError(new Error('Handshake data is not a string.'))
     }
@@ -156,16 +156,16 @@ class ClientPreparer {
       Now we send our handshake message.
      */
     if (this.resumeToken) {
-      this._d('attempting session resume')
+      this._d('attempting session resume') // [DEBUG]
       this.ws.send(`r@${this.resumeToken}`)
     } else {
-      this._d('querying for session resume token')
+      this._d('querying for session resume token') // [DEBUG]
       this.ws.send('r?')
     }
   }
 
   handleHandshakeResponse (data) {
-    this._d('handling handshake response')
+    this._d('handling handshake response') // [DEBUG]
     if (typeof data !== 'string') {
       return this.handleError(new Error('Handshake response is not a string.'))
     }
@@ -200,7 +200,7 @@ class ClientPreparer {
   }
 
   handlePotentialSessionResume (parts) {
-    this._d('handling potential session resume')
+    this._d('handling potential session resume') // [DEBUG]
     /*
       Check the session resume status. It must be either - or +
      */
@@ -227,7 +227,7 @@ class ClientPreparer {
   }
 
   handleSetSessionResume (parts) {
-    this._d('handling set session resume')
+    this._d('handling set session resume') // [DEBUG]
     /*
       Check the session resume status. It must be either y or n
      */
@@ -252,14 +252,14 @@ class ClientPreparer {
   }
 
   finishPreparation () {
-    this._d('finishing preparation')
+    this._d('finishing preparation') // [DEBUG]
     this.prepared = true
     if (this.returnValue.isResume && !this.returnValue.resumeOk) this.ws.close()
     this.resolve(this.returnValue)
   }
 
   startHandshakeTimeout () {
-    this._d('starting handshake timeout')
+    this._d('starting handshake timeout') // [DEBUG]
     // We do not require a stop function because
     // the timeout is per-instance only. If ClientPreparer.prepared = true,
     // then it will stay prepared forever and ever.

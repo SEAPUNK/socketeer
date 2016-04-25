@@ -1,12 +1,12 @@
 'use strict'
 
-const debug = require('debug')
+const debug = require('debug') // [DEBUG]
 const ClientAbstract = require('./ClientAbstract')
 
 class ServerClient extends ClientAbstract {
   constructor (ws, resumeToken, id, ip, heartbeatInterval, server) {
     super()
-    this._d = debug('socketeer:ServerClient')
+    this._d = debug('socketeer:ServerClient') // [DEBUG]
 
     this.server = server
     this.id = id
@@ -28,7 +28,7 @@ class ServerClient extends ClientAbstract {
 
     this._isReady = false
 
-    this._d(`new ServerClient from IP address: ${this.ip}`)
+    this._d(`new ServerClient from IP address: ${this.ip}`) // [DEBUG]
     this._attachEvents()
   }
 
@@ -44,9 +44,9 @@ class ServerClient extends ClientAbstract {
     if (!this._isReady) return this._handleError(new Error('Client sent extraneous message during handshake.'))
 
     let data = messageEvent.data
-    const _d = this._d
+    const _d = this._d // [DEBUG]
 
-    _d('handling message')
+    _d('handling message') // [DEBUG]
     if (data === 'h') {
       if (!this.isOpen()) return
       this._handleHeartbeat()
@@ -75,13 +75,13 @@ class ServerClient extends ClientAbstract {
   }
 
   _startHeartbeat () {
-    this._d('starting heartbeat loop')
+    this._d('starting heartbeat loop') // [DEBUG]
     this._heartbeatLoop = setTimeout(() => {
       if (!this.isOpen()) return
       this.ws.send('h')
       this._heartbeatTimeout = setTimeout(() => {
         if (!this.isOpen()) return
-        this._d('heartbeat timeout called')
+        this._d('heartbeat timeout called') // [DEBUG]
         this._emit('timeout')
         // TODO: use code 1013
         this.close(3000, 'heartbeat timeout')
@@ -90,13 +90,13 @@ class ServerClient extends ClientAbstract {
   }
 
   _stopHeartbeat () {
-    this._d('stopping heartbeat loop')
+    this._d('stopping heartbeat loop') // [DEBUG]
     clearTimeout(this._heartbeatLoop)
     clearTimeout(this._heartbeatTimeout)
   }
 
   _handleHeartbeat () {
-    this._d('handling heartbeat')
+    this._d('handling heartbeat') // [DEBUG]
     this._stopHeartbeat()
     this._startHeartbeat()
   }
@@ -130,7 +130,7 @@ class ServerClient extends ClientAbstract {
   }
 
   _replaceSocket (ws, newToken, ip, heartbeatInterval) {
-    this._d(`hot-swapping websockets for ServerClient id ${this.id} @ ip ${this.ip}`)
+    this._d(`hot-swapping websockets for ServerClient id ${this.id} @ ip ${this.ip}`) // [DEBUG]
     this._socketeerClosing = false
     this.ws = ws
     const oldIp = this.ip
@@ -138,7 +138,7 @@ class ServerClient extends ClientAbstract {
     this.server.sessionManager.unreserveToken(newToken)
     this._sessionToken = newToken
     this._heartbeatInterval = heartbeatInterval
-    this._d(`hot-swapped websocket's IP address: ${this.ip}`)
+    this._d(`hot-swapped websocket's IP address: ${this.ip}`) // [DEBUG]
     this._attachEvents()
     this.ws.send(`ok:+:${newToken}`)
     this._startHeartbeat()
@@ -147,13 +147,13 @@ class ServerClient extends ClientAbstract {
   }
 
   close (code, message) {
-    this._d('closing connection')
+    this._d('closing connection') // [DEBUG]
     this._disableResuming = true
     super.close(code, message)
   }
 
   terminate () {
-    this._d('terminating connection')
+    this._d('terminating connection') // [DEBUG]
     this._disableResuming = true
     super.terminate()
   }

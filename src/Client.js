@@ -1,6 +1,6 @@
 'use strict'
 
-const debug = require('debug')
+const debug = require('debug') // [DEBUG]
 const maybestack = require('maybestack')
 const ClientAbstract = require('./ClientAbstract')
 const ClientPreparer = require('./ClientPreparer')
@@ -9,7 +9,7 @@ class Client extends ClientAbstract {
   constructor (address, options, WebSocket) {
     super()
 
-    const _d = this._d = debug('socketeer:Client')
+    const _d = this._d = debug('socketeer:Client') // [DEBUG]
 
     this._WebSocket = WebSocket
 
@@ -34,9 +34,9 @@ class Client extends ClientAbstract {
     }
 
     if (this._failless) {
-      _d('[failless] adding client error handler')
+      _d('[failless] adding client error handler') // [DEBUG]
       this.on('error', (err) => {
-        _d(`[failless] handling client error: ${maybestack(err)}`)
+        _d(`[failless] handling client error: ${maybestack(err)}`) // [DEBUG]
       })
     }
 
@@ -44,7 +44,7 @@ class Client extends ClientAbstract {
   }
 
   _prepareConnection () {
-    this._d('preparing new connection')
+    this._d('preparing new connection') // [DEBUG]
     const wsArgs = this._wsConstructArgs
     const handshakeTimeout = this._handshakeTimeout
     const token = (this._resumePromiseResolve) ? this._resumeToken : null
@@ -107,7 +107,7 @@ class Client extends ClientAbstract {
   _handleMessage (messageEvent) {
     let data = messageEvent.data
 
-    this._d('handling message')
+    this._d('handling message') // [DEBUG]
     if (data === 'h') {
       if (!this.isOpen()) return
       this._handleHeartbeat()
@@ -124,7 +124,7 @@ class Client extends ClientAbstract {
   }
 
   _handleHeartbeat () {
-    this._d('handling heartbeat')
+    this._d('handling heartbeat') // [DEBUG]
     this._resetHeartbeatTimeout()
     this.ws.send('h')
     this._emit('ping')
@@ -132,13 +132,13 @@ class Client extends ClientAbstract {
 
   _resetHeartbeatTimeout () {
     const timeoutPeriod = this._heartbeatInterval + this._heartbeatTimeout
-    this._d(`resetting heartbeat timeout: ${timeoutPeriod}`)
+    this._d(`resetting heartbeat timeout: ${timeoutPeriod}`) // [DEBUG]
 
     this._stopHeartbeatTimeout()
 
     this._heartbeatTimer = setTimeout(() => {
       if (!this._isReady) return
-      this._d('heartbeat timeout called')
+      this._d('heartbeat timeout called') // [DEBUG]
       this._emit('timeout')
       // TODO: use code 1013
       this.close(3000, 'heartbeat timeout')
@@ -146,20 +146,20 @@ class Client extends ClientAbstract {
   }
 
   _stopHeartbeatTimeout () {
-    this._d('stopping heartbeat timeout')
+    this._d('stopping heartbeat timeout') // [DEBUG]
     if (this._heartbeatTimer) clearTimeout(this._heartbeatTimer)
   }
 
   resume () {
     return new Promise((resolve, reject) => {
-      this._d('attempting session resume')
+      this._d('attempting session resume') // [DEBUG]
       if (!this.isClosing() && !this.isClosed()) {
-        this._d('has not closed, nothing to resume')
+        this._d('has not closed, nothing to resume') // [DEBUG]
         return reject(new Error('client has not disconnected to resume session yet'))
       }
 
       if (!this._resumeToken) {
-        this._d('no resume token, nothing to resume')
+        this._d('no resume token, nothing to resume') // [DEBUG]
         return resolve(false)
       }
 
@@ -179,14 +179,14 @@ class Client extends ClientAbstract {
     // we are not going to resume the session.
     this._resumeToken = null
     const timeout = (immediate) ? 0 : this._reconnectWait
-    this._d(`will reconnect in ${timeout} ms`)
+    this._d(`will reconnect in ${timeout} ms`) // [DEBUG]
     setTimeout(() => {
       this._doReconnect()
     }, timeout)
   }
 
   _doReconnect () {
-    this._d('reconnecting')
+    this._d('reconnecting') // [DEBUG]
     this._willReconnect = false
     this._isReconnection = true
     this._prepareConnection()

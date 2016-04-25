@@ -1,7 +1,7 @@
 'use strict'
 
 const EventEmitter = require('events').EventEmitter
-const debug = require('debug')
+const debug = require('debug') // [DEBUG]
 const maybestack = require('maybestack')
 const WebSocket = require('ws')
 const setImmediateShim = require('set-immediate-shim')
@@ -18,7 +18,7 @@ class Server extends EventEmitter {
 
     if (!options) options = {}
 
-    const _d = this._d = debug('socketeer:Server')
+    const _d = this._d = debug('socketeer:Server') // [DEBUG]
 
     this._heartbeatTimeout = options.heartbeatTimeout || 15000
     this._heartbeatInterval = options.heartbeatInterval || 10000
@@ -31,9 +31,9 @@ class Server extends EventEmitter {
     this._middlewares = []
 
     if (this._failless) {
-      _d('[failless] attaching server error handler')
+      _d('[failless] attaching server error handler') // [DEBUG]
       this.on('error', (err) => {
-        _d(`[failless] handling client error: ${maybestack(err)}`)
+        _d(`[failless] handling client error: ${maybestack(err)}`) // [DEBUG]
       })
     }
 
@@ -81,17 +81,17 @@ class Server extends EventEmitter {
   }
 
   _handleError (err) {
-    this._d(`got error: ${maybestack(err)}`)
+    this._d(`got error: ${maybestack(err)}`) // [DEBUG]
     this.emit('error', err)
   }
 
   _handleHeaders (headers) {
-    this._d(`got headers: ${inspect(headers)}`)
+    this._d(`got headers: ${inspect(headers)}`) // [DEBUG]
     this.emit('headers', headers)
   }
 
   broadcast (name, data) {
-    this._d(`broadcasting event: ${name}`)
+    this._d(`broadcasting event: ${name}`) // [DEBUG]
     this.room.get('all').emit(name, data)
   }
 
@@ -100,27 +100,27 @@ class Server extends EventEmitter {
   }
 
   use (middleware) {
-    this._d('attaching middleware')
+    this._d('attaching middleware') // [DEBUG]
     this._middlewares.push(middleware)
-    this._d(`total middleware: ${this._middlewares.length}`)
+    this._d(`total middleware: ${this._middlewares.length}`) // [DEBUG]
   }
 
   stop () {
-    this._d('stopping server')
+    this._d('stopping server') // [DEBUG]
     if (!this.wss) return
     this.pool.clear()
     this.room.clear()
     this.room._clearAll()
     this.wss.removeAllListeners('error')
     this.wss.on('error', (err) => {
-      this._d(`handling error of stopped server: ${maybestack(err)}`)
+      this._d(`handling error of stopped server: ${maybestack(err)}`) // [DEBUG]
     })
     this.wss.close()
     delete this.wss
   }
 
   _handleConnection (connection) {
-    this._d('got connection, preparing connection')
+    this._d('got connection, preparing connection') // [DEBUG]
     const preparer = new ServerClientPreparer(connection, this)
     let client  // So handleNewSession and setupConnection
                 // know which client to use
@@ -148,13 +148,13 @@ class Server extends EventEmitter {
     })
 
     const handleNewSession = () => {
-      this._d(`handling new session w/ token: ${client._sessionToken}`)
+      this._d(`handling new session w/ token: ${client._sessionToken}`) // [DEBUG]
 
       ;(Promise.resolve().then(() => {
         if (this._middlewares.length) {
-          this._d(`running ${this._middlewares.length} middleware on client`)
+          this._d(`running ${this._middlewares.length} middleware on client`) // [DEBUG]
           return Promise.each(this._middlewares, (middleware, idx) => {
-            this._d(`calling middleware #${idx + 1}`)
+            this._d(`calling middleware #${idx + 1}`) // [DEBUG]
             return middleware(client).then((allow) => {
               if (!allow) return Promise.reject()
               return Promise.resolve()
@@ -170,16 +170,16 @@ class Server extends EventEmitter {
         setupConnection()
       }).catch((err) => {
         if (!client.isOpen()) {
-          this._d('server client closed before we could finish setup')
+          this._d('server client closed before we could finish setup') // [DEBUG]
           return setupErrorHandler(new Error('Connection closed before setup finish.'))
         }
 
         // TODO: This can be problematic.
         if (!err) {
-          this._d('a middleware rejected the connection')
+          this._d('a middleware rejected the connection') // [DEBUG]
           client.ws.send('err:A server middleware rejected your connection.')
         } else {
-          this._d(`an error occured while processing middleware: ${maybestack(err)}`)
+          this._d(`an error occured while processing middleware: ${maybestack(err)}`) // [DEBUG]
           setupErrorHandler(err)
         }
         client.close()
@@ -187,24 +187,24 @@ class Server extends EventEmitter {
     }
 
     const setupConnection = () => {
-      this._d('finishing setup on new connection')
+      this._d('finishing setup on new connection') // [DEBUG]
       try {
         client.removeAllListeners('error')
         if (!client.isOpen()) {
-          this._d('server client closed before we could finish setup')
+          this._d('server client closed before we could finish setup') // [DEBUG]
           return setupErrorHandler(new Error('client closed before setup finish'))
         }
 
         if (this._failless) {
-          this._d('[failless] adding server client error handler')
+          this._d('[failless] adding server client error handler') // [DEBUG]
           client.on('error', (err) => {
-            this._d(`[failless] handling server client error: ${maybestack(err)}`)
+            this._d(`[failless] handling server client error: ${maybestack(err)}`) // [DEBUG]
           })
         }
 
         client._register()
       } catch (err) {
-        this._d(`connection creation errored: ${maybestack(err)}`)
+        this._d(`connection creation errored: ${maybestack(err)}`) // [DEBUG]
         client.close()
         return setupErrorHandler(err)
       }
@@ -214,13 +214,13 @@ class Server extends EventEmitter {
     const setupErrorHandler = (err) => {
       if (calledSetupErrorHandler) return
       calledSetupErrorHandler = true
-      this._d('called setup error handler')
+      this._d('called setup error handler') // [DEBUG]
       if (client) {
         this.pool.unreserveId(client.id)
         this.sessionManager.unreserveToken(client._sessionToken)
         client.removeAllListeners('error')
         client.on('error', (err) => {
-          this._d(`error handler called on defunct connection: ${maybestack(err)}`)
+          this._d(`error handler called on defunct connection: ${maybestack(err)}`) // [DEBUG]
         })
       }
       this.emit('connectionSetupError', err)

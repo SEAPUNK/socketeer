@@ -1,12 +1,12 @@
 'use strict'
 
-const debug = require('debug')
+const debug = require('debug') // [DEBUG]
 const randomBytes = require('crypto').randomBytes
 const forever = require('async.forever')
 
 class SessionManager {
   constructor (server) {
-    this._d = debug('socketeer:SessionManager')
+    this._d = debug('socketeer:SessionManager') // [DEBUG]
     this.server = server
     this.sessions = new Map()
     this.reserved = new Set()
@@ -15,15 +15,15 @@ class SessionManager {
 
   reserveNewToken () {
     return new Promise((resolve, reject) => {
-      this._d('reserving new token')
+      this._d('reserving new token') // [DEBUG]
       if (!this.server.supportsResuming) {
-        this._d('server does not support session resuming')
+        this._d('server does not support session resuming') // [DEBUG]
         return resolve(null)
       }
       forever((next) => {
         this.generateToken().then((token) => {
           if (this.tokenInUse(token)) return next()
-          this._d(`reserved new token: ${token}`)
+          this._d(`reserved new token: ${token}`) // [DEBUG]
           this.reserved.add(token)
           next({
             isOkay: true,
@@ -48,13 +48,13 @@ class SessionManager {
 
   attemptResume (token, ip) {
     return new Promise((resolve, reject) => {
-      this._d('attempting session resume')
+      this._d('attempting session resume') // [DEBUG]
       const session = this.sessions.get(token)
       if (!session) return resolve({newToken: null})
       if (session.active) return resolve({newToken: null})
       if (!this.server.resumeAllowsDifferentIPs && ip !== session.ip) return resolve({newToken: null})
       // Otherwise, we can re-mark as active, and set it to a new token.
-      this._d('session resume seems OK, generating new token')
+      this._d('session resume seems OK, generating new token') // [DEBUG]
       // This to ensure the timeout does not run, and if it did,
       // that it does not clean up ServerClient.
       clearTimeout(session.timeout)
@@ -85,7 +85,7 @@ class SessionManager {
   }
 
   deleteSession (token) {
-    this._d('deleting session resume token')
+    this._d('deleting session resume token') // [DEBUG]
     const session = this.sessions.get(token)
     // TODO: Should this throw an error instead?
     if (!session) return false
@@ -101,7 +101,7 @@ class SessionManager {
   }
 
   createSession (token, client, ip) {
-    this._d(`creating new session with token: ${token}`)
+    this._d(`creating new session with token: ${token}`) // [DEBUG]
     this.sessions.set(token, {
       client: client,
       ip: ip,
@@ -122,20 +122,20 @@ class SessionManager {
   }
 
   cleanSession (token, session, isManual) {
-    this._d(`cleaning session (isManual: ${isManual}): ${token}`)
+    this._d(`cleaning session (isManual: ${isManual}): ${token}`) // [DEBUG]
     this.deleteSession(token)
     session.client._destroySession(isManual)
   }
 
   deactivateSession (token, destroy) {
-    this._d(`deactivating session: ${token}`)
+    this._d(`deactivating session: ${token}`) // [DEBUG]
     const session = this.sessions.get(token)
     if (!session) return // TODO: Throw an error instead?
     if (!session.active) return // TODO: Throw an error instead?
     if (session.timeout) return // TODO: Throw an error instead?
     session.active = false
     const cleanFn = () => {
-      this._d(`session timeout called for token: ${token}`)
+      this._d(`session timeout called for token: ${token}`) // [DEBUG]
       if (session.active) return
       if (session.isResuming) {
         session.timeoutCalled = true
@@ -162,7 +162,7 @@ class SessionManager {
     // TODO: Non-cryptographically secure token configuration
     // TODO: Stronger generation (hex is only half-effective string length-wise)
     return new Promise((resolve, reject) => {
-      this._d('generating new token')
+      this._d('generating new token') // [DEBUG]
       if (!this.server.supportsResuming) return resolve(null)
       randomBytes(75, (err, buf) => {
         if (err) return reject(err)
