@@ -814,7 +814,12 @@ define("SocketeerBrowserClient", [], function() { return /******/ (function(modu
 	        this._messageQueue.unshift(msg);
 	        return setImmediateShim(done);
 	      } else {
-	        return this.ws.send(msg, done);
+	        if (this._isBrowserClient) {
+	          this.ws.send(msg);
+	          return done();
+	        } else {
+	          return this.ws.send(msg, done);
+	        }
 	      }
 	    }
 	  }, {
