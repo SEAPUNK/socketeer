@@ -174,7 +174,12 @@ class ClientAbstract extends EventEmitter {
       return setImmediateShim(done)
     } else {
       this._da('sending next message in queue') // [DEBUG]
-      return this.ws.send(msg, done)
+      if (this._isBrowserClient) {
+        this.ws.send(msg)
+        return done()
+      } else {
+        return this.ws.send(msg, done)
+      }
     }
   }
 

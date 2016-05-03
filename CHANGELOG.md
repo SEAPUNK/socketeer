@@ -23,6 +23,7 @@ client.request('stuff', null, {
 * Added experimental support for browser builds
 * Removed bluebird dependency in favor of environment's Promises
 * Revamped the build system, added experimental support for browser builds
+* Fixed message queue being stuck in browser clients
 
 0.8.2
 ===
