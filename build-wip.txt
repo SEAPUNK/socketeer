@@ -92,7 +92,7 @@ project layout:
   The temporary build directory. Should be automatically
   removed after each build attempt.
 
-  Purged automatically with 'npm clean'.
+  Purged automatically with 'npm run clean'.
 
 - dist/
 
@@ -100,7 +100,7 @@ project layout:
   The directory itself is what we use to publish Socketeer. We `cd` into
   the directory, and then run 'npm publish'.
 
-  Purged automatically with 'npm clean'.
+  Purged automatically with 'npm run clean'.
 
 - _temp/
 
@@ -108,7 +108,7 @@ project layout:
   manual processes faster (e.g. creating .zips of the directories for the
   Github Releases tab).
 
-  Purged automatically with 'npm clean'.
+  Purged automatically with 'npm run clean'.
 
 ---
 
