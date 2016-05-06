@@ -1,0 +1,58 @@
+welcome to the nodejs ecosystem
+here's your free (and required) 500 builds
+
+
+dist/
+  package.json (main -> node/debugless/)
+  LICENSE
+  README.md
+  CHANGELOG.md
+  .npmignore
+  node/
+    debug/
+    debugless/
+  browser/
+    socketeer.amd.js
+    socketeer.amd-debug.js
+    socketeer.amd-min.js
+    socketeer.commonjs2.js
+    socketeer.commonjs2-debug.js
+    socketeer.commonjs2-min.js
+    socketeer.var.js
+    socketeer.var-debug.js
+    socketeer.var-min.js
+
+node builds
+  -
+    + es6
+    + commonjs
+  -
+    + debug
+    + debugless
+
+browser builds
+  -
+    + es6
+    + commonjs
+    + var
+    + amd
+  -
+    + debug
+    + debugless
+    + minified
+
+
+code
+  - with debug code (debug lines marked out)
+  - es6 (the latest and the greatest)
+  - a node client (passes the node modules)
+    and a browser client (passes the node modules)
+
+i dreamed a dream
+  where everything relied on es6 modules to end this whole
+  commonjs/global/amd/umd/asdf module exporting system
+
+  (will eventually drop all sorts of exports until es6
+  modules are mature in most popular browsers and clients
+
+  in ~2-6 years)
