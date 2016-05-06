@@ -1,58 +1,167 @@
-welcome to the nodejs ecosystem
-here's your free (and required) 500 builds
+WELCOME TO THE SOCKETEER PROJECT LAYOUT FILE
 
+BECAUSE NOBODY CAN EVER AGREE ON WHAT MODULE EXPORT
+TO USE, HOW TO REQUIRE FILES, YADDA YADDA YADDA,
+I AM MORE OR LESS FORCED TO HAVE A CUSTOM BUILD SYSTEM
+THAT (ALMOST) SATISFIES ALL OF THE USERS' NEEDS
+
+(spoiler: it's a mess, although i try to contain it as much as i can)
+
+---
+
+project layout:
+
+- docs/
+
+  All of the documentation goes here. Not really concerned with
+  how it's organized there.
+
+- scripts/
+
+  Various (mostly lifecycle) scripts. Not used in Socketeer, but
+  rather, assist in doing things like testing, publishing, building,
+  and so forth.
+
+- src/
+
+  This is where the source code lives.
+
+  All code is written in es6, support targeting the latest LTS release (as of
+  writing, v4.4.4). The code should NOT utilize any es6 features or syntax that
+  is not yet supported by said LTS release. There will be a test-specific build
+  that only transpiles the es6 module imports to commonjs requires, and then
+  runs the test suite on the build to make sure that the code on the
+  node version. Testing is done via Travis. No Appveyor, unless you want to
+  make it work yourself, and then creating a PR for it. Fuck Windows.
+
+  (Patience, my friend. Soon enough node 6 will be LTS, and you'll
+  be able to use most of the es6 features.)
+
+  The code also contains lines used for debugging. These debug lines
+  are marked out by having the word `[DEBUG]` at the end. The build
+  script creates the debugless files by removing all lines that are marked as
+  debug lines, so NEVER MIX DEBUG AND NON-DEBUG CODE IN A SINGLE LINE.
+
+- test/
+
+  All test scripts. This one is a bit tricky, because I have to be as DRY as
+  possible, while testing the entire suite.
+
+  A testing script in scripts/ will run the test suite on each build, to make
+  sure it all works.
+
+  This folder is split up into the following directories:
+
+  - protocol/
+
+    Protocol tests. This tests client and server protocol compliance.
+
+    - client/
+
+      Client-side protocol testing. Some client will connect to the provided
+      server, and the server will test the client's compliance.
+
+    - server/
+
+      Server-side protocol testing. Client will connect to a server, and the
+      client will test the server's protocol compliance.
+
+  - client/
+
+    Client API testing.
+
+    - common/
+
+      Client tests that should work on both the nodejs client
+      and the browser client.
+
+    - browser/
+
+      Browser client specific tests.
+
+    - nodejs/
+
+      Nodejs client specific tests.
+
+  - server/
+
+    Server API testing.
+
+- _tmpbuild/
+
+  The temporary build directory. Should be automatically
+  removed after each build attempt.
+
+  Purged automatically with 'npm clean'.
+
+- dist/
+
+  The distribution directory, or where all of the built files are.
+  The directory itself is what we use to publish Socketeer. We `cd` into
+  the directory, and then run 'npm publish'.
+
+  Purged automatically with 'npm clean'.
+
+- _temp/
+
+  A temporary directory, used for any scripts that create files that make
+  manual processes faster (e.g. creating .zips of the directories for the
+  Github Releases tab).
+
+  Purged automatically with 'npm clean'.
+
+---
+
+build system:
+
+this is what the dist directory should look like after each build:
 
 dist/
-  package.json (main -> node/debugless/)
+  package.json (main -> lib/)
   LICENSE
   README.md
   CHANGELOG.md
   .npmignore
-  node/
-    debug/
-    debugless/
-  browser/
-    socketeer.amd.js
+
+  lib/          (the debugless commonjs build directory)
+  debug/        (the debug commonjs build directory)
+
+  es6/          (the debugless es6 module build directory)
+  es6-debug/    (the debug es6 module build directory)
+
+  browser/ (browser builds)
+    index.js (scripts/build/browser-index.js)
+
+    (
+      [].js (unminified debugless builds)
+      []-min.js (minified debugless builds)
+      []-debug.js (unminified debug builds)
+    )
+
+    (
+      i will eventually drop all sorts of exports until es6
+      modules are mature in most popular browsers and clients
+
+      so basically, in about ~2-6 years
+    )
+
+    (
+      if the export has a name, it's named 'SocketeerBrowserClient'
+    )
+
+
+    socketeer.es6.js              (ES6 module builds: `export default (function () {})`)
+    socketeer.es6-debug.js
+    socketeer.es6-min.js
+
+    socketeer.amd.js              (AMD builds: `i dunno i never used AMD lol`)
     socketeer.amd-debug.js
     socketeer.amd-min.js
-    socketeer.commonjs2.js
+
+    socketeer.commonjs2.js        (commonjs2 builds: `module.exports = (function () {})`)
     socketeer.commonjs2-debug.js
     socketeer.commonjs2-min.js
-    socketeer.var.js
+
+    socketeer.var.js              (var builds: 'var SocketeerBrowserClient = (function () {})')
     socketeer.var-debug.js
     socketeer.var-min.js
-
-node builds
-  -
-    + es6
-    + commonjs
-  -
-    + debug
-    + debugless
-
-browser builds
-  -
-    + es6
-    + commonjs
-    + var
-    + amd
-  -
-    + debug
-    + debugless
-    + minified
-
-
-code
-  - with debug code (debug lines marked out)
-  - es6 (the latest and the greatest)
-  - a node client (passes the node modules)
-    and a browser client (passes the node modules)
-
-i dreamed a dream
-  where everything relied on es6 modules to end this whole
-  commonjs/global/amd/umd/asdf module exporting system
-
-  (will eventually drop all sorts of exports until es6
-  modules are mature in most popular browsers and clients
-
-  in ~2-6 years)
