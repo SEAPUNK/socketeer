@@ -1,33 +1,80 @@
 'use strict'
 
-const debug = require('debug') // [DEBUG]
-const maybestack = require('maybestack') // (only used with debugger so far) [DEBUG]
-const ClientAbstract = require('./ClientAbstract')
-const ClientPreparer = require('./ClientPreparer')
+import debugClass from 'debug' // [DEBUG]
+import maybestack from 'maybestack' // [DEBUG]
+
+import ClientAbstract from './ClientAbstract'
+import ClientPreparer from './ClientPreparer'
+
+/**
+ * Utility function that returns true or false,
+ * depending on the below statement. 
+ */
+export function isUnconfigured (val) {
+  return (val === undefined || val === null)
+}
+
+/**
+ * Generate a configuration object for the client based off the
+ * given config values.
+ *
+ * Throws an error if a value is not undefined or null and an invalid value.
+ */
+export function clientApplyOptions (options) {
+  const retval = {}
+
+  if (isUnconfigured(options.heartbeatTimeout)) {
+    
+  }
+}
+
+export default class Client extends ClientAbstract {
+  constructor (address, _options, WebSocket, isBrowser) {
+    super()
+
+    const options = _options || {
+      heartbeatTimeout: 15000,
+      handshakeTimeout: 10000,
+      reconnectWait: 5000,
+      failless: true
+    }
+
+    // Private socketeer client namespace _sc
+    this._sc = {
+      debug: debugClass('socketeer:Client'), // [DEBUG]
+
+      WebSocket: WebSocket,
+      isBrowser: isBrowser,
+
+      socketArgs: [address, options.protocols, options.ws],
+
+      isReady: false,
+      isReconnection: false,
+
+      resumePromiseResolve: null,
+      resumeToken: null,
+      heartbeatTimer: null,
+      willReconnect: false,
+
+      heartbeatTimeout: options.heartbeatTimeout,
+      handshakeTimeout: options.handshakeTimeout,
+      reconnectWait: options.reconnectWait,
+      failless: options.failless
+    }
+  }
+}
+
+
 
 class Client extends ClientAbstract {
   constructor (address, options, WebSocket, isBrowser) {
-    super()
 
-    const _d = this._d = debug('socketeer:Client') // [DEBUG]
-
-    this._WebSocket = WebSocket
-    this._isBrowserClient = isBrowser
-
-    if (!options) options = {}
-    this._wsConstructArgs = [address, options.protocols, options.ws]
     this._heartbeatTimeout = options.heartbeatTimeout || 15000
     this._handshakeTimeout = options.handshakeTimeout || 10000
     this._reconnectWait = options.reconnectWait || 5000
     this._failless = (options.failless !== false)
 
-    this._isReady = false
-    this._isReconnection = false
 
-    this._resumePromiseResolve = null
-    this._resumeToken = null
-    this._heartbeatTimer = null
-    this._willReconnect = false
 
     this.ws = {
       readyState: WebSocket.CLOSED,

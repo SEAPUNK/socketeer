@@ -1,7 +1,7 @@
 'use strict'
 
-const Client = require('./Client')
-const ws = require('ws')
+import Client from './Client'
+import ws from 'ws'
 
 class NodeClient extends Client {
   constructor (address, options) {
@@ -9,4 +9,4 @@ class NodeClient extends Client {
   }
 }
 
-module.exports = NodeClient
+export default NodeClient
