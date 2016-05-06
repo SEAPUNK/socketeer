@@ -1,5 +1,21 @@
+# npm/node related stuff
+
 npm-debug.log*
-node_modules
-.npm
-.node_repl_history
+node_modules/
+.npm/
+.node_repl_history*
+
+
+# Temporary directories.
+
+/_tmpbuild/
+/_temp/
+
+
+# Build directory.
+
+/dist/
+
+
+# TODO: Remove?
 /coverage/

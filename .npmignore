@@ -1,14 +1,16 @@
+#########################################
+# Think twice before editing this file! #
+#########################################
+# This doesn't ignore the directories you think it does,
+# because this file only applies when it's copied over to
+# the dist/ directory.
+#
+# See project-layout.txt for more info.
+
+
+# npm/node related stuff
+
 npm-debug.log*
-node_modules
-.npm
-.node_repl_history
-
-/test
-/_test
-/docs
-/README.md
-/CHANGELOG.md
-
-.babelrc
-.gitignore
-.travis.yml
+node_modules/
+.npm/
+.node_repl_history*

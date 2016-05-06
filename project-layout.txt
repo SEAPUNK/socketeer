@@ -119,7 +119,6 @@ this is what the dist directory should look like after each build:
 dist/
   package.json (main -> lib/)
   LICENSE
-  README.md
   CHANGELOG.md
   .npmignore
 

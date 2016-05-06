@@ -1,8 +1,8 @@
 {
   "name": "socketeer",
-  "version": "0.8.3-rc3b2",
+  "version": "0.8.3-rc5b0",
   "description": "yet another websocket framework",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "standard && istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
     "testonly": "standard && mocha",
@@ -30,13 +30,6 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/SEAPUNK/socketeer/issues"
-  },
-  "standard": {
-    "ignore": [
-      "browser-builds/",
-      "test/",
-      "lib/"
-    ]
   },
   "homepage": "https://github.com/SEAPUNK/socketeer#readme",
   "dependencies": {
@@ -66,8 +59,5 @@
   },
   "engines": {
     "node": ">= 4.0.0"
-  },
-  "ava": {
-    "verbose": true
   }
 }

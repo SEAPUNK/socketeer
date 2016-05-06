@@ -1,4 +1,12 @@
-0.8.3
+0.8.3-rc5
+===
+
+* Completely overhaul the source code (rewrite/refactor)
+* Completely overhaul the folder structure
+* Completely overhaul the build system
+* Completely overhaul the testing system
+
+0.8.3-rc0 -> 0.8.3-rc4
 ===
 
 * Added timeouts to actions (default `30000ms`)
