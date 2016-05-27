@@ -41,20 +41,20 @@
     "set-immediate-shim": "^1.0.1",
     "utf-8-validate": "^1.2.1",
     "uuid": "^2.0.2",
-    "ws": "^1.1.0"
+    "ws": "git+https://github.com/SEAPUNK/ws.git"
   },
   "devDependencies": {
-    "babel-cli": "^6.8.0",
+    "babel-cli": "^6.9.0",
     "babel-loader": "^6.2.4",
     "babel-preset-es2015-webpack": "^6.4.1",
-    "bluebird": "^3.3.5",
+    "bluebird": "^3.4.0",
     "coveralls": "^2.11.9",
     "istanbul": "^0.4.3",
     "mkdirp": "^0.5.1",
-    "mocha": "^2.4.5",
+    "mocha": "^2.5.3",
     "mocha-lcov-reporter": "^1.2.0",
     "rimraf": "^2.5.2",
-    "standard": "^7.0.1",
+    "standard": "^7.1.1",
     "webpack": "^2.1.0-beta.6"
   },
   "engines": {

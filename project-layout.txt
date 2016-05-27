@@ -87,7 +87,7 @@ project layout:
 
     Server API testing.
 
-- _tmpbuild/
+- _temp-build/
 
   The temporary build directory. Should be automatically
   removed after each build attempt.
