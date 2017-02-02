@@ -1,6 +1,8 @@
 socketeer: yet another websocket framework
 ===
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/SEAPUNK/socketeer.svg)](https://greenkeeper.io/)
+
 [![npm version](https://img.shields.io/npm/v/socketeer.svg?style=flat-square)](https://npmjs.com/package/socketeer)
 [![travis build](https://img.shields.io/travis/SEAPUNK/socketeer.svg?style=flat-square)](https://travis-ci.org/SEAPUNK/socketeer)
 [![david dependencies](https://david-dm.org/SEAPUNK/socketeer.svg?style=flat-square)](https://david-dm.org/SEAPUNK/socketeer)
